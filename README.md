@@ -9,7 +9,7 @@ Meanwhile, you can also choose to use linux command to download the dataset:
 ```bash
 wget https://drive.google.com/drive/folders/1HLnVdPPerWS1KX5p1Q38UQaHOGidsf5X?usp=drive_link
 ```
-![image](https://github.com/zhaochen0110/Cotempqa/blob/main/data.pdf)
+![image](https://github.com/zhaochen0110/Cotempqa/blob/main/data.png)
 ## 2.Data Creation
 
 Beside the dataset can be used straightly, we also reveal all details to generate the different CoTempQA Dataset versions.
