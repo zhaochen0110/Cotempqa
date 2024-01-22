@@ -54,23 +54,19 @@ Before generating the data, we need to undertake some preparatory steps, includi
    wget https://drive.google.com/drive/folders/1oBZuU50i5AX3HLjak4mR6qIJssM8uh7y?usp=drive_link
    ```
 
+
+
 ### (2) Extract co-temporal relationship from raw data
 
-In this step, we will traverse and compare the time occurrences of relevant tasks, converting synchronous events into structured representations. We can input the mission_name to assign which kind structured data to generate, output_file to assign where to store the output and data_level to assign the amount of the raw data we use, we can choose different data_level depends on the number of final data you need.
+In this step, we will traverse and compare the time occurrences of relevant tasks, converting synchronous events into structured representations. Meanwhile, we will transform the structured representation into  natural language forms. Then we will categorize the obtained data into four types, namely equal, during, overlap, and mix. Notably, we have prepared raw data of various sizes. In order to generate datasets of different volumes, we can use raw data of different sizes.
 
 ```bash
-python extract.py --mission_name S1_R1_O2.json --output_file structured_data --data_level all
+python extract.py --data_level v3 --output_path test
 ```
 
-### (3) Transfer structured data to query
 
-In this step, we will translate the obtained structured synchronous events into textual representations, and for data with a low quantity of facts, we will utilize templates for data augmentation. 
 
-```bash
-python structured_to_query.py --task S1_R1_O2 --question_templates templates\level_4.csv --data_level all --output_path data_without_temporal_expression
-```
-
-### (4) Add Co-temporal expression
+### (3) Add Co-temporal expression
 
 In this step, we will add suffixes to the preliminary data to incorporate co-temporal descriptions, for instance, 'during the same time span'.
 
@@ -78,15 +74,9 @@ In this step, we will add suffixes to the preliminary data to incorporate co-tem
 python transfer_template.py
 ```
 
-### (5) Classify the data
 
-In this phase, we will classify the acquired data into four categories: 'equal' denotes events happening concurrently, 'overlap' indicates time periods where events coincide, 'during' signifies a containment relationship among simultaneous events' time intervals, and 'mix' represents scenarios within the synchronic timeframe involving at least two of the following: 'equal', 'overlap', and 'during'.
 
-```bash
-python classification_original_data.py
-```
-
-### (6) Evaluation
+### (4) Evaluation
 
 After the model performs inference on this dataset, we can extract answers from the generative answer using template matching, with accuracy and F1 score as evaluation metrics. We prepare two python script, evaluate_for_gpt.py is used for evaluate chatgpt, evaluate_for_open_model.py is used for evaluate other open model in huggingface. 
 
