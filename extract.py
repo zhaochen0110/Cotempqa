@@ -5,7 +5,8 @@ from collections import Counter
 import random
 from tqdm import tqdm
 import argparse
-
+from structured_to_query import *
+from classify_data import * 
 # # 时间节点的确认没有向前回溯
 
 # # 读取源TSV文件
@@ -120,16 +121,6 @@ def judge_imply(key1, key2,subject1=None,subject2=None,S=True):
         else:
             return 'flag'
 
-        # if complete_time(point_time1, is_start=True)[1] == 0 and complete_time(start2, is_start=True)[1] != 0 and complete_time(point_time1, is_start=True)[0] in [complete_time(start2, is_start=True)[0], complete_time(end2, is_start=True)[0]]:
-        #     return 'flag'
-
-        # if complete_time(point_time1, is_start=True) == complete_time(start2, is_start=True) or complete_time(point_time1, is_start=False) == complete_time(end2, is_start=False):
-        #     return ((complete_time(point_time1), R_S_1), R_S_2, "dot_to_interval_easy")
-        # elif complete_time(start2, is_start=True) < complete_time(point_time1, is_start=False) < complete_time(end2, is_start=False):
-        #     return ((complete_time(point_time1), R_S_1), R_S_2, "dot_to_interval_hard")
-        # else:
-        #     return None
-
 
     if point_time2 is not None and point_time1 is None:
         point_time2=complete_time(point_time2, is_start=True)
@@ -228,106 +219,198 @@ def judge_imply(key1, key2,subject1=None,subject2=None,S=True):
         return 'flag'
         
 
-def main(root,mission_name,data_level):
-    same_S_ST_ET = defaultdict(list)
-    result_dict = defaultdict(lambda: defaultdict(list))
+def main(data_level,output_path):
+    query_templates = {
+        'S1_R1_O2':'templates/level_4.csv',
+        'S2_R1_O1':'templates/level_5.csv',
+        'S1_R2_O2':'templates/level_6.csv',
+        'S2_R1_O2':'templates/level_7.csv',
+        'S2_R2_O2':'templates/level_8.csv'
+                       }
+    equal = []
+    during = []
+    overlap = []
+    mix = []
+    # result_dict = defaultdict(lambda: defaultdict(list))
     data_file = f'raw_data/ailab_data_{data_level}.tsv'
-    if mission_name=='S1_R1_O2.json':
-        with open(data_file, 'r', newline='', encoding='utf-8') as infile:
-            tsv_reader = csv.reader(infile, delimiter='\t')
-            for row in tsv_reader:
-                relation, subject, object_, start_time, end_time = row
-                key = (relation, subject)  # 注意这里，我们用relation, subject, object作为键
-                same_S_ST_ET[key].append((object_, start_time, end_time))
+    for mission_name in ['S1_R1_O2', 'S2_R1_O1', 'S1_R2_O2', 'S2_R1_O2', 'S2_R2_O2']:
+        same_S_ST_ET = defaultdict(list)
+        point_templates_path = 'generate_point_templates//'+mission_name+'.csv'
+        interval_templates_path = 'generate_interval_templates//'+mission_name+'.csv'
+        rawdata_path = f'raw_data/ailab_data_{data_level}.tsv'
+        qid_path = f'qid/ailab_data_{data_level}.txt'
+        subject_path = f'facts/ailab_{data_level}_subject_fact.json'
+        object_path = f'facts/ailab_{data_level}_object_fact.json'
+        question_templates = read_query_templates(query_templates[mission_name])
+        name_dict = read_qid_names(qid_path)
+        point_templates = read_generate_templates(point_templates_path)
+        interval_templates = read_generate_templates(interval_templates_path)
+        store_time = {}
+        is_subject = True #判断问题的主体是否是subject，对于S2-R1_O1，其主体是object
+        if 'S2_R1_O1' in mission_name:
+            is_subject = False
+        if is_subject:
+            question_fact_path = subject_path
+            DA_path = object_path
+        else:
+            question_fact_path = object_path
+            DA_path = subject_path
 
-        filtered_subjects = {object_: data_list for object_, data_list in same_S_ST_ET.items() if object_[0] in ['P54','P39', 'P102', 'P108', 'P127']}
-    
-    elif mission_name=='S2_R1_O1.json':
-        with open(data_file, 'r', newline='', encoding='utf-8') as infile:
-            tsv_reader = csv.reader(infile, delimiter='\t')
-            for row in tsv_reader:
-                relation, subject, object_, start_time, end_time = row
-                key = (relation, object_)  # 注意这里，我们用relation, subject, object作为键
-                same_S_ST_ET[key].append((subject, start_time, end_time))
-        filtered_subjects = {object_: data_list for object_, data_list in same_S_ST_ET.items() if object_[0] in ["P54", "P39", "P108", "P102", "P69", "P488", "P6", "P127"]}
-    
-    elif mission_name in ['S1_R2_O2.json','S2_R1_O2.json','S2_R2_O2.json']:
-        if mission_name=='S1_R2_O2.json':
-            with open(data_file, 'r', newline='', encoding='utf-8') as infile:
-                tsv_reader = csv.reader(infile, delimiter='\t')
-                for row in tsv_reader:
-                    relation, subject, object_, start_time, end_time = row
-                    key = subject # 注意这里，我们用relation, subject, object作为键
-                    same_S_ST_ET[key].append((relation, object_, start_time, end_time))
-        else:           
-            with open(data_file, 'r', newline='', encoding='utf-8') as infile:
-                tsv_reader = csv.reader(infile, delimiter='\t')
-                for row in tsv_reader:
-                    relation, subject, object_, start_time, end_time = row
-                    key = subject # 注意这里，我们用relation, subject, object作为键
-                    same_S_ST_ET[key].append((relation, object_, start_time, end_time))
-        # filtered_subjects = {object_: data_list for object_, data_list in same_S_ST_ET.items() if 4 < len(data_list) < 13}
-        filtered_subjects = {object_: data_list for object_, data_list in same_S_ST_ET.items() if 4< len(data_list) < 13}
-    
-    if mission_name in ['S2_R1_O1.json','S1_R2_O2.json','S1_R1_O2.json']:
-
-        for key, value_list in tqdm(filtered_subjects.items()):
-            # import pdb; pdb.set_trace()
-            min_time_units = []
-            flag=0
-            for i in range(len(value_list)):         
-                # 要求找到value_list所有最小时间单元情况下，不同object的构成情况都要考虑
-                for j in range(i+1, len(value_list)):
-                    key1 = value_list[i]
-                    key2 = value_list[j]
-                    min_time_unit=None
-                    # import pdb; pdb.set_trace() 
-                    if mission_name=='S1_R2_O2.json':
-                        relation1, object_1, start1, end1 = key1
-                        relation2, object_2, start2, end2 = key2
-                        relation_pair_str = relation1 + '-' + relation2
-                        if relation_pair_str in ['P39-P102', 'P39-P108', 'P102-P39', 'P69-P108', 'P108-P69', 'P69-P39', 'P108-P39', 'P102-P108', 'P69-P102', 'P102-P69', 'P54-P69', 'P54-P286', 'P39-P6']:
-                            min_time_unit = judge_imply(key1, key2)
-                    else:
-                        min_time_unit = judge_imply(key1, key2)
-
-                    if min_time_unit=='flag':
-                        flag='flag'
-
-                    if min_time_unit:
-                        min_time_units.append(min_time_unit)
-
-                if flag=='flag':
-                    min_time_units=[]
-                    break
-
-            if min_time_units != []:
-                result_dict[key] = min_time_units
+        fact_dict = {}
+        time_search = {}
+        with open(question_fact_path, 'r') as f:  #获得任务主体相关的事实
+            for l in f:
+                item = json.loads(l.strip())
+                entity = item.get("entity", "")
+                facts = item.get("facts", [])
+                data_list = item['data_list']
+                fact_dict[entity] = facts
+                time_search[entity] = data_list
         
-        with open(root+'\\'+mission_name, 'w', encoding='utf-8') as json_file:
-            for key, time_to_objects in result_dict.items():
-                # print(key)
-                # relation, subject = key  # Split the key into relation and subject
-                # Initialize the dictionary for this particular relation and subject
-                time_to_objects = sorted(time_to_objects, key=custom_sort)
-                if mission_name in ['S1_R1_O2.json','S2_R1_O1.json']:
-                    relation, subject = key
-                    current_data = {
-                    "entity": subject,
-                    "relation": relation,
-                    "query": time_to_objects
-                    }
-                else:
-                    subject = key
-                    current_data = {
-                        "entity": subject,
-                        "query": time_to_objects
-                    }
-                json_data = json.dumps(current_data)
-                json_file.write(json_data + '\n')
+        DA_object = {}
+        if 'S1_R1_O2' in mission_name:
+            relation_limit = ['P39', 'P102', 'P108', 'P127']
+        elif 'S2_R1_O1' in mission_name:
+            relation_limit = ['P39', 'P102', 'P108', 'P127', 'P54', 'P6', 'P488', 'P69']
+        elif 'S1_R2_O2' in mission_name:
+            relation_limit = ['P39', 'P102', 'P108','P6',"P69",'P286','P54']
+        elif 'S2_R1_O2' in mission_name:
+            relation_limit = ['P39', 'P102', 'P108', 'P127','P6',"P69",'P488','P54','P286']
+        elif 'S2_R2_O2' in mission_name:
+            relation_limit = ['P39', 'P102', 'P108', 'P127','P6',"P69",'P488','P54','P286']
+        if is_subject:
+            with open(DA_path, 'r') as f:  #我们这里将获取数据扩充所需要用到的对象，原则是首先获得不同的关系对应有哪些subject或者object
+                for l in f:
+                    item = json.loads(l.strip())
+                    name = item.get("name", "")
+                    data = item.get("data_list", [])
+                    relation = data[0][0]
+                    if relation in relation_limit:
+                        if relation not in DA_object:
+                            DA_object[relation]=[]
+                        if name not in DA_object[relation]:
+                            DA_object[relation].append(name)
+        else:
+            with open(DA_path, 'r') as f:
+                for l in f:
+                    item = json.loads(l.strip())
+                    name = item.get("entity", "")
+                    data_list = item['data_list']
+                    for data in data_list:
+                        relation = data[0]
+                        if relation in relation_limit:
+                            if relation not in DA_object:
+                                DA_object[relation]=[]
+                            if name not in DA_object[relation]:
+                                DA_object[relation].append(name)
 
-    else:
-        with open(root+'\\'+mission_name, 'w', encoding='utf-8') as json_file:
+        with open(rawdata_path, 'r', newline='', encoding='utf-8') as infile:  #使用对应的原始数据
+            tsv_reader = csv.reader(infile, delimiter='\t')
+            for row in tsv_reader:
+                relation, subject, object_, start_time, end_time = row
+                key = (relation, subject,object_)  # 注意这里，我们用relation, subject, object作为键
+                store_time[key]=(start_time,end_time)
+
+        if mission_name=='S1_R1_O2':
+            with open(data_file, 'r', newline='', encoding='utf-8') as infile:
+                tsv_reader = csv.reader(infile, delimiter='\t')
+                for row in tsv_reader:
+                    relation, subject, object_, start_time, end_time = row
+                    key = (relation, subject)  # 注意这里，我们用relation, subject, object作为键
+                    same_S_ST_ET[key].append((object_, start_time, end_time))
+
+            filtered_subjects = {object_: data_list for object_, data_list in same_S_ST_ET.items() if object_[0] in ['P54','P39', 'P102', 'P108', 'P127']}
+        
+        elif mission_name=='S2_R1_O1':
+            with open(data_file, 'r', newline='', encoding='utf-8') as infile:
+                tsv_reader = csv.reader(infile, delimiter='\t')
+                for row in tsv_reader:
+                    relation, subject, object_, start_time, end_time = row
+                    key = (relation, object_)  # 注意这里，我们用relation, subject, object作为键
+                    same_S_ST_ET[key].append((subject, start_time, end_time))
+            filtered_subjects = {object_: data_list for object_, data_list in same_S_ST_ET.items() if object_[0] in ["P54", "P39", "P108", "P102", "P69", "P488", "P6", "P127"]}
+        
+        elif mission_name in ['S1_R2_O2','S2_R1_O2','S2_R2_O2']:
+            if mission_name=='S1_R2_O2':
+                with open(data_file, 'r', newline='', encoding='utf-8') as infile:
+                    tsv_reader = csv.reader(infile, delimiter='\t')
+                    for row in tsv_reader:
+                        relation, subject, object_, start_time, end_time = row
+                        key = subject # 注意这里，我们用relation, subject, object作为键
+                        same_S_ST_ET[key].append((relation, object_, start_time, end_time))
+            else:           
+                with open(data_file, 'r', newline='', encoding='utf-8') as infile:
+                    tsv_reader = csv.reader(infile, delimiter='\t')
+                    for row in tsv_reader:
+                        relation, subject, object_, start_time, end_time = row
+                        key = subject # 注意这里，我们用relation, subject, object作为键
+                        same_S_ST_ET[key].append((relation, object_, start_time, end_time))
+            # filtered_subjects = {object_: data_list for object_, data_list in same_S_ST_ET.items() if 4 < len(data_list) < 13}
+            filtered_subjects = {object_: data_list for object_, data_list in same_S_ST_ET.items() if 4< len(data_list) < 13}
+        
+        if mission_name in ['S2_R1_O1','S1_R2_O2','S1_R1_O2']:
+
+            for key, value_list in tqdm(filtered_subjects.items()):
+                # import pdb; pdb.set_trace()
+                min_time_units = []
+                flag=0
+                for i in range(len(value_list)):         
+                    # 要求找到value_list所有最小时间单元情况下，不同object的构成情况都要考虑
+                    for j in range(i+1, len(value_list)):
+                        key1 = value_list[i]
+                        key2 = value_list[j]
+                        min_time_unit=None
+                        # import pdb; pdb.set_trace() 
+                        if mission_name=='S1_R2_O2':
+                            relation1, object_1, start1, end1 = key1
+                            relation2, object_2, start2, end2 = key2
+                            relation_pair_str = relation1 + '-' + relation2
+                            if relation_pair_str in ['P39-P102', 'P39-P108', 'P102-P39', 'P69-P108', 'P108-P69', 'P69-P39', 'P108-P39', 'P102-P108', 'P69-P102', 'P102-P69', 'P54-P69', 'P54-P286', 'P39-P6']:
+                                min_time_unit = judge_imply(key1, key2)
+                        else:
+                            min_time_unit = judge_imply(key1, key2)
+
+                        if min_time_unit=='flag':
+                            flag='flag'
+
+                        if min_time_unit:
+                            min_time_units.append(min_time_unit)
+
+                    if flag=='flag':
+                        min_time_units=[]
+                        break
+
+                if min_time_units != []:
+                    if mission_name in ['S1_R1_O2','S2_R1_O1']:
+                        relation, subject = key
+                        current_data = {
+                        "entity": subject,
+                        "relation": relation,
+                        "query": min_time_units
+                        }                    
+                    else:
+                        subject = key
+                        current_data = {
+                            "entity": subject,
+                            "query": min_time_units
+                        }
+                    data = data_generate(mission_name, question_templates, current_data, store_time, point_templates, interval_templates, name_dict, fact_dict, DA_object, time_search, is_subject)
+                    if data != []:
+                        for k in data:
+                            new_data = classify_data(k)
+                            if new_data['class'] == 'equal':
+                                equal.append(new_data)
+                            elif new_data['class'] == 'during':
+                                during.append(new_data)
+                            elif new_data['class'] == 'overlap':
+                                overlap.append(new_data)
+                            elif new_data['class'] == 'mix':
+                                mix.append(new_data)
+                    # output_list.append(data)
+                    # json_data = json.dumps(current_data)
+                    # json_file.write(json_data + '\n')
+
+        else:
             for i, (key1, value_list1) in enumerate(tqdm(filtered_subjects.items())):
                 for j, (key2, value_list2) in enumerate(filtered_subjects.items()):
                     if j <= i:  # 跳过重复的和自身的比较
@@ -340,7 +423,7 @@ def main(root,mission_name,data_level):
                             subject2 = key2
                             relation1, object1, start1, end1 = data1
                             relation2, object2, start2, end2 = data2
-                            if mission_name == 'S2_R1_O2.json':
+                            if mission_name == 'S2_R1_O2':
                                 if relation1 == relation2 and object1 != object2 and subject1 != subject2:  # 确保关系相同但对象不同
                                     min_time_unit = judge_imply(data1, data2, subject1, subject2,False)
                                     # if min_time_unit == 'uncertain':
@@ -364,7 +447,7 @@ def main(root,mission_name,data_level):
                             break
 
                     if min_time_units != []:
-                        if mission_name == 'S2_R1_O2.json':
+                        if mission_name == 'S2_R1_O2':
                             subject = (key1, key2)  # Split the key into relation and subject
                         else:
                             subject = (key1, key2, relation1, relation2)  # Split the key into relation and subject
@@ -373,19 +456,54 @@ def main(root,mission_name,data_level):
                             "entity_pair": subject,
                             "query": min_time_units
                         }
-
-                        json_data = json.dumps(current_data)
-                        json_file.write(json_data + '\n')
+                        data = data_generate(mission_name, question_templates, current_data, store_time, point_templates, interval_templates, name_dict, fact_dict, DA_object, time_search, is_subject)
+                        if data!=[]:
+                            for k in data:
+                                new_data = classify_data(k)
+                                if new_data['class'] == 'equal':
+                                    equal.append(new_data)
+                                elif new_data['class'] == 'during':
+                                    during.append(new_data)
+                                elif new_data['class'] == 'overlap':
+                                    overlap.append(new_data)
+                                elif new_data['class'] == 'mix':
+                                    mix.append(new_data)
+    num = min(len(equal), 1000)
+    equal = random.sample(equal, num)
+    with open('test/equal.json', 'w', encoding='utf-8') as f:
+        for data in equal:
+            json_data = json.dumps(data)
+            f.write(json_data+'\n')
+    num = min(len(during), 1000)
+    during = random.sample(during, num)
+    with open('test/during.json', 'w', encoding='utf-8') as f:
+        for data in during:
+            json_data = json.dumps(data)
+            f.write(json_data+'\n')
+    num = min(len(overlap), 1000)
+    overlap = random.sample(overlap, num)
+    with open('test/overlap.json', 'w', encoding='utf-8') as f:
+        for data in overlap:
+            json_data = json.dumps(data)
+            f.write(json_data+'\n')
+    num = min(len(mix), 1000)
+    mix = random.sample(mix, num)
+    with open('test/mix.json', 'w', encoding='utf-8') as f:
+        for data in mix:
+            json_data = json.dumps(data)
+            f.write(json_data+'\n')
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(allow_abbrev=False)
     parser.add_argument('--mission_name', type=str, metavar='N',
-                   default='S1_R1_O2.json', help='which kind structured data to generate')
-    parser.add_argument('--output_file', type=str, metavar='N',
-                   default='structured_data', help='where to store the data') 
+                   default='S1_R1_O2.json', help='which kind structured data to generate') 
     parser.add_argument('--data_level',
                 type=str,
                 default='v3',
-                help='the amount of the raw data')   
+                help='the amount of the raw data') 
+    parser.add_argument('--output_path',
+                type=str,
+                default='data_without_temporal_expression',
+                help='where to store the data')  
     args = parser.parse_args()
-    main(args.output_file,args.mission_name,args.data_level)
+    main(args.data_level,args.output_path)
