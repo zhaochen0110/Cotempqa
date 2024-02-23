@@ -1,7 +1,7 @@
 # Living in the Moment: Can Large Language Models Grasp Co-Temporal Reasoning?
 
 
-![Alt text for image](/path/to/picture.pdf)
+![Alt text for image](picture.pdf)
 
 
 <hr>
