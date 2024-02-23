@@ -17,7 +17,7 @@ The dataset can be downloaded from [this link](https://drive.google.com/drive/fo
 Additionally, we offer comprehensive support tools including:
 - Extracting Co-temporal Facts
 - QA Pairs Construction
-- Evaluation
+- Evaluation for various models (GPT, LLaMA, WizardLM series ...)
 
 
 ## 1.Dataset
