@@ -1,4 +1,6 @@
-# CoTempQA
+# Living in the Moment: Can Large Language Models Grasp Co-Temporal Reasoning?
+
+😎: This is the official implementation repository of our study on co-temporal reasoning capabilities in Large Language Models (LLMs).
 
 ## 1.Dataset
 
