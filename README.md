@@ -1,7 +1,7 @@
 # Living in the Moment: Can Large Language Models Grasp Co-Temporal Reasoning?
 
 
-<img src="picutre.pdf" width="300" alt="Magic mirror">
+![Alt text for image](/path/to/picture.pdf)
 
 
 <hr>
