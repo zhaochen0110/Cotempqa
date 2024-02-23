@@ -1,5 +1,10 @@
 # Living in the Moment: Can Large Language Models Grasp Co-Temporal Reasoning?
 
+
+<img src="picutre.pdf" width="300" alt="Magic mirror">
+
+
+<hr>
 😎: This is the official implementation repository of our study on co-temporal reasoning capabilities in Large Language Models (LLMs).
 
 ## 1.Dataset
