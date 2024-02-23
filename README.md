@@ -11,6 +11,12 @@
 <hr>
 😎: This is the official implementation repository of our study on co-temporal reasoning capabilities in Large Language Models (LLMs).
 
+## 🔥 Supported
+- Extracting Co-temporal Facts
+- QA Pairs Construction
+- Evaluation
+
+
 ## 1.Dataset
 
 The dataset can be downloaded from [this link](https://drive.google.com/drive/folders/1HLnVdPPerWS1KX5p1Q38UQaHOGidsf5X?usp=drive_link)
