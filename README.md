@@ -1,6 +1,10 @@
 # Living in the Moment: Can Large Language Models Grasp Co-Temporal Reasoning?
 
-<img src="picture.png" width="300" alt="image1">
+<p align="center">
+  <img src="picture.png" alt="image1">
+</p>
+
+
 
 
 
