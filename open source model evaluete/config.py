@@ -4,87 +4,8 @@ import json, jsonlines, datetime, string
 from collections import Counter
 import re
 
-def classified_data(file):
-    equal = []
-    overlap = []
-    during = []
-    mix = []
-    mix_fs = []
-    overlap_fs = []
-    equal_fs = []
-    during_fs = []
-    equal_cot = []
-    overlap_cot = []
-    during_cot = []
-    mix_cot = []
-    cnt =0
-    if 'equal' in file:
-        origin_file = 'equal.json'
-    elif 'overlap' in file:
-        origin_file = 'overlap.json'
-    elif 'during' in file:
-        origin_file = 'during.json'
-    elif 'mix' in file:
-        origin_file = 'mix.json'
-
-    q_cnt = set()
-    origin_datas = []
-    with open('classified_data\\'+origin_file,'r',encoding='utf-8') as f:
-        for line in f:
-            item = json.loads(line)
-            origin_datas.append(item)
-    with open(file,'r',encoding='utf-8') as f:
-        all_data = json.load(f)
-    # print(file)
-    for key in all_data.keys():
-        cnt+=1
-        data = all_data[key]
-        origin_promote = data['origin_prompt']
-        question = origin_promote.split('Question:')[-1]
-
-        for origin_data in origin_datas:
-            if origin_data['question'] in question:
-                if 'S1_R1_O2' in origin_data['triple_element']:
-                    data['is_subject'] = False
-                else:
-                    data['is_subject'] = True
-                data['question'] = origin_data['question']
-                data['facts'] = origin_data['facts']
-                if question in q_cnt:
-                    continue
-                if 'fs_equal' in file:
-                    equal_fs.append(data)
-                elif 'fs_overlap' in file:
-                    overlap_fs.append(data)
-                elif 'fs_during' in file:
-                    during_fs.append(data)
-                elif 'fs_mix' in file:
-                    mix_fs.append(data)
-                elif 'fs_cot_equal' in file:
-                    equal_cot.append(data)
-                elif 'fs_cot_overlap' in file:
-                    overlap_cot.append(data)
-                elif 'fs_cot_during' in file:
-                    during_cot.append(data)
-                elif 'fs_cot_mix' in file:
-                    mix_cot.append(data)
-                elif 'equal' in file:
-                    equal.append(data)
-                elif 'overlap' in file:
-                    overlap.append(data)
-                elif 'during' in file:
-                    during.append(data)
-                elif 'mix' in file:
-                    mix.append(data)
-                q_cnt.add(question)
-    for i in [equal,equal_fs,equal_cot,during,during_fs,during_cot,mix,mix_fs,mix_cot,overlap,overlap_fs,overlap_cot]:
-        if i!=[]:
-            return i
-    
 def normalize_answer(s):
     # TODO: should we keep those counter removal? 
-    def remove_counter(text):
-        return text.replace("年", "").replace("歳", "").replace("人", "").replace("년", "")
 
     def white_space_fix(text):
         return ' '.join(text.split())
@@ -97,7 +18,7 @@ def normalize_answer(s):
     def lower(text):
         return text.lower()
 
-    return white_space_fix(remove_counter(remove_punc(lower(s))))
+    return white_space_fix(remove_punc(lower(s)))
 
 def exact_match_score(prediction, ground_truth):
     return prediction == ground_truth
@@ -138,22 +59,24 @@ search_dict = {
 reverse_search = [(' the position of ', 'P39'),(' a member of ', 'P102'),(' the chair of ', 'P488'),(' the head of ', 'P6'),(' owned by ', 'P127'),('attend', 'P69'), ('work', 'P108'),('play', 'P54')]
 
 
-def main(input_path):
-    all_data = classified_data(input_path)
+def main(all_data, mode):
     em_total = 0
     f1_total = 0
     p_total = 0
     r_total = 0
     count = 0
     for data in all_data:
-        golds = data['gold'] #对比大小写区别
+        golds = data['gold'] 
         golds = [ans.lower() for ans in golds]
         
-        is_subject = data['is_subject']
+        if 'S1_R1_O2' in data['triple_element']:
+            is_subject = False
+        else:
+            is_subject = True
         
         prediction = data['prediction']
         prediction = prediction.lower()
-        if 'cot' in input_path:
+        if 'cot' in mode:
             if 'therefore the answer is' not in prediction:
                 prediction = 'answer'
             else:
@@ -168,7 +91,7 @@ def main(input_path):
         question = data['question']
         question = question.lower()
         
-        alternative_answers=[] #对比大小写区别
+        alternative_answers=[] 
 
         for fact in facts:
             is_match = False
@@ -203,9 +126,9 @@ def main(input_path):
                             start_time = match.group(3) 
                     if is_match:
                         if is_subject:
-                            alternative_answers.append(subject.lower()) #对比大小写区别
+                            alternative_answers.append(subject.lower()) 
                         else:
-                            alternative_answers.append(extract_content.lower()) #对比大小写区别
+                            alternative_answers.append(extract_content.lower()) 
         
         alternative_answers = alternative_answers+golds
         alternative_answers = list(set(alternative_answers))
@@ -245,17 +168,5 @@ def main(input_path):
         p_total += p
         r_total+=r
         count+=1
-
-    print(input_path,end=':')
-    print({'em': round(em_total*100/count,1), 'f1': round(f1_total*100/count,1),'p':round(p_total*100/count,1),'r':round(r_total*100/count,1),'avg':round((em_total+f1_total)*50/count,1)},end=' ')
-    print('number:{0}'.format(count)) 
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--input-path',
-                        type=str,
-                        default='S1_R1_O2.json',
-                        help='The path to the json file')
-    args = parser.parse_args()
-    input_path = args.input_path
-    main(input_path)
+    
+    return {'em': round(em_total*100/count,1), 'f1': round(f1_total*100/count,1),'p':round(p_total*100/count,1),'r':round(r_total*100/count,1),'avg':round((em_total+f1_total)*50/count,1)}

@@ -5,8 +5,8 @@ from collections import Counter
 import random
 from tqdm import tqdm
 import argparse
-from structured_to_query import *
-from classify_data import * 
+from data_construct.structured_to_query import *
+from data_construct.classify_data import * 
 # # 时间节点的确认没有向前回溯
 
 # # 读取源TSV文件
