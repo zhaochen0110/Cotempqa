@@ -169,4 +169,4 @@ def main(all_data, mode):
         r_total+=r
         count+=1
     
-    return {'em': round(em_total*100/count,1), 'f1': round(f1_total*100/count,1),'p':round(p_total*100/count,1),'r':round(r_total*100/count,1),'avg':round((em_total+f1_total)*50/count,1)}
+    return {'acc': round(em_total*100/count,1), 'f1': round(f1_total*100/count,1),'p':round(p_total*100/count,1),'r':round(r_total*100/count,1),'avg':round((em_total+f1_total)*50/count,1)}

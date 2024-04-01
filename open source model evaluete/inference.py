@@ -54,7 +54,7 @@ def get_prompts(all_inputs, template):
         all_outputs.append(output)
     return all_outputs
 
-def evaluate_cotemporal(model_name, data_path, mode, output_dir):
+def evaluate_cotemporal(model_name, data_path, mode, output_dir, evaluate_result_dir):
     all_data = []
     with open(data_path, 'r', encoding='utf-8') as f:
         for line in f:
@@ -78,16 +78,21 @@ def evaluate_cotemporal(model_name, data_path, mode, output_dir):
     output_data = []
     for prompt, input, output in zip(all_prompts, all_data, all_outputs):
         prompt = 'Answer the question based on the context:' + prompt.split('Answer the question based on the context:')[-1]
-        output_data.append({'input': prompt, 'prediction': output, 'gold': input['answer'], 'triple_element': input['triple_element'], 
-                            'question': input['question', 'facts': input['facts']]})
+        output_data.append({'input': prompt, 'prediction': output, 'gold': input['answer'], 'triple_element': input['triple_element'], 'question': input['question'], 'facts': input['facts']})
     
     filename = data_path.split("/")[-1]
-    output_path =  output_dir + '/' + mode + filename
+    output_path =  output_dir + '/' + mode + '_' + filename
     
     with open(output_path, 'w', encoding = 'utf-8') as f:
         for data in output_data:
             json_data = json.dumps(data)
             f.write(json_data + '\n')
+            
+    result = main(output_data, mode)
+    evaluate_result_path = evaluate_result_dir+'/'+mode+'_'+filename
+    with open(evaluate_result_path, 'w', encoding='utf-8') as f:
+        json_data = json.dumps(result)
+        f.write(json_data + '\n')
 
 
 if __name__ == "__main__":
@@ -96,7 +101,8 @@ if __name__ == "__main__":
     parser.add_argument("data_path", type=str, help="Path to the dataset file")
     parser.add_argument("mode", type=str, help="use which way to evaluate the co-temporal ability of llms")
     parser.add_argument("output_dir", type=str, help="Path to save the outputs")
+    parser.add_argument("evaluate_output", type=str, help="Path to save the evaluate result")
     
     args = parser.parse_args()
 
-    evaluate_cotemporal(args.model_name, args.data_path, args.mode, args.output_dir)
+    evaluate_cotemporal(args.model_name, args.data_path, args.mode, args.output_dir, args.evaluate_output)
