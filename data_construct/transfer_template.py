@@ -1,3 +1,4 @@
+### add temporal expression to the end
 import json
 import random
 import os
@@ -36,12 +37,12 @@ def template_generate(input_file, output_file, expression=expression_list[0]):
             f.write(json_data + '\n')
 
     print(f"save in {output_file}") 
-
-# random generate
-for file_name in ['S1_R1_O2.json','S1_R2_O2.json','S2_R1_O1.json','S2_R1_O2.json','S2_R2_O2.json']:
-    input_file = 'data_without_temporal_expression/' + file_name
-    output_file1 = 'result/' + file_name
-    # output_file2 = 'inital2expand/inital/' + file_name
-    random_generate(input_file, output_file1)
+  
+  
+if __name__ == '__main__':  
+    for file_name in ['S1_R1_O2.json','S1_R2_O2.json','S2_R1_O1.json','S2_R1_O2.json','S2_R2_O2.json']:
+        input_file = 'data_without_temporal_expression/' + file_name
+        output_file1 = 'result/' + file_name
+        random_generate(input_file, output_file1)
 
 

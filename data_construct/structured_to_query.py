@@ -68,7 +68,6 @@ def fact_combine(subjects, fact_dict):
     return fact_lst
 
 def time_judgement(question_time, compare_time):
-    # 说明他是一个段时间
     # import pdb; pdb.set_trace()
     if len(compare_time) == 2:
         start1, end1 = question_time
@@ -85,7 +84,6 @@ def time_judgement(question_time, compare_time):
             return False
 
     # import pdb; pdb.set_trace()
-    # 说明他是一个点时间
 
     if len(compare_time) == 3:
         

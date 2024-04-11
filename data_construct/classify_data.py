@@ -1,3 +1,8 @@
+## classify the data into four classes: 
+# equal: time(query) == time(condition)
+# during: time(query) is a subset of time(condition) / time(condition) is a subset of time(query)
+# overlap: time(query) overlap with time(condition)
+# mix: at least contain two of above three classes (equal, during, overlap)
 import argparse, os
 import itertools
 import json, jsonlines, datetime, string
@@ -62,33 +67,28 @@ def time_transfer(st):
         day = 0
     return (year,month,day)
 
+# 1 -> equal
+# 2 -> during
+# 3 -> overlap
 def time_judge(time1, time2):
-    if len(time1) == 1 and len(time2) == 1:
-        # print(time1,time2)
+    if len(time1) == 1 and len(time2) == 1: # point-time1 = point-time2
         return 1
-    elif len(time1) == 1 and len(time2) == 2:
+    elif (len(time1) == 1 and len(time2) == 2) or (len(time1) == 2 and len(time2) == 1): # point-time is a subset of interval-time
         return 2
-    elif len(time1) == 2 and len(time2) == 1:
-        return 2
-    else:
+    else: # interval-time & interval-time
         start1,end1 = time1
         start2,end2 = time2
         if start1==start2 and end1==end2:
             return 1
         
-        if start2 < start1 and start1< end1 and end1<= end2:
-            return 2
+        # time1 is a subset of time2
+        if (start2 < start1 and start1< end1 and end1<= end2) or (start2 <= start1 and start1 < end1 and end1 < end2):
+            return 2    
         
-        if start2 <= start1 and start1 < end1 and end1 < end2:
-            return 2       
-        
-        # s1 s2 e2 e1
-        if start1 <= start2 and start2 < end2 and end2 < end1:
+        # time2 is a subset of time1
+        if (start1 <= start2 and start2 < end2 and end2 < end1) or (start1 < start2 and start2 < end2 and end2 <= end1):
             return 2
 
-        if start1 < start2 and start2 < end2 and end2 <= end1:
-            return 2
-               
         # s1 s2 e1 e2
         if start1 < start2 and start2 < end1 and end1 < end2:
             return 3
@@ -97,10 +97,6 @@ def time_judge(time1, time2):
         if start2 < start1 and start1 < end2 and end2 < end1:
             return 3
         
-# overlap_list=[]
-# mix_list=[]
-# during_list=[]
-# equal_list=[]
 def classify_data(data):
     is_subject = data['is_subject']
     id = data ['id']
@@ -110,38 +106,29 @@ def classify_data(data):
         return None
     level = data['level']
     answer = data['answer']
-    if len(answer) == 1:
+    if len(answer) == 1:  # if only have one answer, the level can truly represent the class
+        class_ = ''
         if 'during' in level:
-            data = {
-                'id':data['id'],
-                'question':data['query'],
-                'class':'during',
-                'is_subject':is_subject
-            }
-            return data
+            class_ = 'during'
         elif 'equal' in level:
-            data = {
-                'id':data['id'],
-                'question':data['query'],
-                'class':'equal',
-                'is_subject':is_subject
-            }
-            return data
+            class_ = 'equal'
         elif 'overlap' in level:
+            class_ = 'overlap'
+        if class_ != '':
             data = {
                 'id':data['id'],
                 'question':data['query'],
-                'class':'overlap',
+                'class':class_,
                 'is_subject':is_subject
             }
             return data
         else:
-            print('classify error')
+            print('classify error')         
     else:
         facts = data['fact']
         question = data['query']
         alternative_answers_with_time = {}
-        for fact in facts:
+        for fact in facts:  # extract all optional answers from fact and timestamp
             is_match = False
             for p in reverse_search:
                 if is_match:
@@ -187,7 +174,7 @@ def classify_data(data):
                                 alternative_answers_with_time[extract_content] = [time_transfer(start_time)]     
         new = sorted(alternative_answers_with_time.items(),key = lambda x:len(x[0]),reverse=True)   
         for item in new:
-            if item[0] in  question:
+            if item[0] in question and item[0] not in answer:
                 condition_time = item[1]
                 break
         answer_time_cnt = {}

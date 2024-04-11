@@ -7,30 +7,31 @@ from tqdm import tqdm
 import argparse
 from data_construct.structured_to_query import *
 from data_construct.classify_data import * 
-# # 时间节点的确认没有向前回溯
 
-# # 读取源TSV文件
-# # 下面的时间
-
-# # 将时间转换为可比较的元组，None 被转换为极小或极大值以便于比较
-
-def complete_time(time, is_start=True):
-
+## transfer the time into int tuple 
+def complete_time(time):
     year, month, day = time
-    if is_start:
-        return (year, month if month is not None else 0, day if day is not None else 0)
-    else:
-        return (year, month if month is not None else 0, day if day is not None else 0)
+    return (year, month if month is not None else 0, day if day is not None else 0)
 
-## 定义排序    
+## define the order   
 def custom_sort(item):
     order = {"dot_to_dot_equal": 0, "dot_to_interval_during": 1, "interval_to_interval_equal": 2, "interval_to_interval_during": 3, 'interval_to_interval_overlap': 4}
     level = order[item[2]]
     return level
 
+## judge weather cotemporal from three dimensions: 
+# 1. point-time & point time
+# 2. point-time & interval time
+# 3. interval-time & interval time
+# key (which can distinguish a event)
+# S -> False when have at least two variable(s,r,o) and one of them is variable (s)
+# key(S1_R1_O2) -> (object, start time, end time)
+# key(S2_R1_O1) -> (subject, start_time, end_time)
+# key(S1_R2_O2) -> (relation, object, start_time, end_time)
+# key(S2_R1_O2) and key(S2_R2_O2) -> (relation, object, start_time, end_time) + (subject1, subject2)
 def judge_imply(key1, key2,subject1=None,subject2=None,S=True):
     if S:
-        if len(key1)==3:
+        if len(key1)==3: # key(S1_R1_O2) or key(S2_R1_O1)
             R_S_1, start1, end1 = key1
             R_S_2, start2, end2 = key2
 
@@ -39,7 +40,7 @@ def judge_imply(key1, key2,subject1=None,subject2=None,S=True):
                 end1 = 'None'
             if start2 == end2:
                 end2 = 'None'
-        else:
+        else: # key(S1_R2_O2)
             relation1, object_1, start1, end1 = key1
             relation2, object_2, start2, end2 = key2
 
@@ -52,7 +53,7 @@ def judge_imply(key1, key2,subject1=None,subject2=None,S=True):
                     end1 = 'None'
                 if start2 == end2:
                     end2 = 'None'
-    else:
+    else: # key(S2_R1_O2) and key(S2_R2_O2)
         relation1, object_1, start1, end1 = key1
         relation2, object_2, start2, end2 = key2
 
@@ -66,66 +67,64 @@ def judge_imply(key1, key2,subject1=None,subject2=None,S=True):
             end2 = 'None'
 
 
-    # 这步将模型转换为(None, None, None)的格式，如果有其中为0的情况
+    # transfer None into tuple
     start1 = eval(start1) if start1 != 'None' else (None, None, None)
     end1 = eval(end1) if end1 != 'None' else (None, None, None)
     start2 = eval(start2) if start2 != 'None' else (None, None, None)
     end2 = eval(end2) if end2 != 'None' else (None, None, None)
 
-    # 判断是否为点时间
+    # judge weather is a point-time
     point_time1 = start1 if end1 == (None, None, None) else end1 if start1 == (None, None, None) else None
     point_time2 = start2 if end2 == (None, None, None) else end2 if start2 == (None, None, None) else None
     
-    # 如果其中有一个是点时间，就是纯粹的点时间(None, None, None)这三个都不是None
-    # 两个都是点时间的情况
+    # if these two events are both point-time
     if point_time1 is not None and point_time2 is not None:
-        if complete_time(point_time1, is_start=False) == complete_time(point_time2, is_start=False) and complete_time(point_time1, is_start=False)[1]!=0 and complete_time(point_time1, is_start=False)[2]!=0:
+        if complete_time(point_time1) == complete_time(point_time2) and complete_time(point_time1)[1]!=0 and complete_time(point_time1)[2]!=0: #eg. time1 (2014, 1, 1) time2 (2014, 1, 1) -> equal
             return ((complete_time(point_time1), R_S_1), R_S_2, "dot_to_dot_equal") 
-        elif complete_time(point_time1,is_start=False)[0]!=complete_time(point_time2, is_start=False)[0]:
+        elif complete_time(point_time1)[0]!=complete_time(point_time2)[0]: # year1 != year2
+            return None # None -> not cotemporal
+        elif complete_time(point_time1)[0]==complete_time(point_time2)[0] and complete_time(point_time1)[1]!=complete_time(point_time2)[1] and 0 not in [complete_time(point_time1)[1],complete_time(point_time2)[1]]: # month1 != month2
             return None
-        elif complete_time(point_time1,is_start=False)[0]==complete_time(point_time2, is_start=False)[0] and complete_time(point_time1,is_start=False)[1]!=complete_time(point_time2,is_start=False)[1] and 0 not in [complete_time(point_time1,is_start=False)[1],complete_time(point_time2,is_start=False)[1]]:
-            return None
-        elif complete_time(point_time1,is_start=False)[0]==complete_time(point_time2, is_start=False)[0] and complete_time(point_time1,is_start=False)[1]==complete_time(point_time2, is_start=False)[1] and complete_time(point_time1,is_start=False)[2]!=complete_time(point_time2,is_start=False)[2] and 0 not in [complete_time(point_time2,is_start=False)[2],complete_time(point_time1,is_start=False)[2]]:
+        elif complete_time(point_time1)[0]==complete_time(point_time2)[0] and complete_time(point_time1)[1]==complete_time(point_time2)[1] and complete_time(point_time1)[2]!=complete_time(point_time2)[2] and 0 not in [complete_time(point_time2)[2],complete_time(point_time1)[2]]: # day1 != day2
             return None
         else:
-            return 'flag'
+            return 'flag' # flag -> ambiguous cotemporal expression (eg. (2014, 0, 0) & (2014, 6, 1))
 
-    # 其中一个是点时间的情况
+    # point-time & interval-time
     if point_time1 is not None and point_time2 is None:
-        # 限制极端情况的判断，当比较的时间一个是只有年份，另外一个是段时间，删去由于1976,0,0这种模棱两可的情况
-        point_time1 = complete_time(point_time1,is_start=True)
-        start2 = complete_time(start2,is_start=True)
-        end2 = complete_time(end2,is_start=False)
+        point_time1 = complete_time(point_time1)
+        start2 = complete_time(start2)
+        end2 = complete_time(end2)
         if start2<point_time1<end2:
-            if point_time1[0] not in [start2[0],end2[0]]:
+            if point_time1[0] not in [start2[0],end2[0]]:  # start_year2 < start_year1 < end_year2
                 return ((point_time1,R_S_1),R_S_2,"dot_to_interval_during")
-            elif point_time1[0] == start2[0] and point_time1[1]==start2[1]==0:
+            elif point_time1[0] == start2[0] and start2[1]==0: # eg. [(2014, 0, 0), (...)] & (2014, 6, 1)
                 return 'flag'
-            elif point_time1[0] == end2[0] and point_time1[1]==end2[1]==0:
+            elif point_time1[0] == end2[0] and point_time1[1]==0: #eg. (2014, 0, 0) & [(...), (2014, 6, 1)]
                 return 'flag'
-            elif point_time1[0] == start2[0] and point_time1[1]!=start2[1] and ((point_time1[1]==0 and start2[1]!=0) or (point_time1[1]!=0 and start2[1]==0)):
+            elif point_time1[0] == start2[0] and point_time1[1] == start2[1] and start2[2] == 0: #eg. [(2014, 6, 0), (...)] & (2014, 6, 1)
                 return 'flag'
-            elif point_time1[0] == end2[0] and point_time1[1]!=end2[1] and ((point_time1[1]==0 and end2[1]!=0) or (point_time1[1]!=0 and end2[1]==0)):
+            elif point_time1[0] == end2[0] and point_time1[1] == end2[1] and point_time1[2] == 0: #eg. (2014, 6, 0) & [(...), (2014, 6, 1)]
                 return 'flag'
             return ((point_time1,R_S_1),R_S_2,"dot_to_interval_during")
-        elif point_time1[0] not in [start2[0],end2[0]]:
+        elif point_time1[0] not in [start2[0],end2[0]]: # year1 < start_year2 or year1 > end_year2
             return None
-        elif point_time1[0] == start2[0] and point_time1[1]!=start2[1] and point_time1[1]!=0 and start2[1]!=0:
+        elif point_time1[0] == start2[0] and point_time1[1]!=start2[1] and point_time1[1]!=0 and start2[1]!=0: # eg. [(2014, 6, 0), (...)] & (2014, 5, 1)
             return None
-        elif point_time1[0] == start2[0] and point_time1[1]==start2[1] and point_time1[2]!=start2[2] and point_time1[2]!=0 and start2[2]!=0:
+        elif point_time1[0] == start2[0] and point_time1[1]==start2[1] and point_time1[2]!=start2[2] and point_time1[2]!=0 and start2[2]!=0: # eg. [(2014, 6, 5), (...)] & (2014, 6, 1)
             return None
-        elif point_time1[0] == end2[0] and point_time1[1]!=end2[1] and point_time1[1]!=0 and end2[1]!=0:
+        elif point_time1[0] == end2[0] and point_time1[1]!=end2[1] and point_time1[1]!=0 and end2[1]!=0: #eg. (2014, 7, 0) & [(...), (2014, 6, 1)]
             return None
-        elif point_time1[0] == end2[0] and point_time1[1]==end2[1] and point_time1[2]!=end2[2] and point_time1[2]!=0 and end2[2]!=0:
+        elif point_time1[0] == end2[0] and point_time1[1]==end2[1] and point_time1[2]!=end2[2] and point_time1[2]!=0 and end2[2]!=0: #eg. (2014, 6, 5) & [(...), (2014, 6, 1)]
             return None
         else:
             return 'flag'
 
 
-    if point_time2 is not None and point_time1 is None:
-        point_time2=complete_time(point_time2, is_start=True)
-        start1 = complete_time(start1,is_start=True)
-        end1 = complete_time(end1,is_start=False)
+    if point_time2 is not None and point_time1 is None: # the same as (point-time & interval-time) above
+        point_time2=complete_time(point_time2)
+        start1 = complete_time(start1)
+        end1 = complete_time(end1)
         if start1<point_time2<end1:
             if point_time2[0] not in [start1[0],end1[0]]:
                 return ((point_time2,R_S_1),R_S_2,"dot_to_interval_during")
@@ -150,18 +149,7 @@ def judge_imply(key1, key2,subject1=None,subject2=None,S=True):
             return None
         else:
             return 'flag'        
-        # if complete_time(point_time2, is_start=True)[1] == 0 and complete_time(start1, is_start=True)[1] != 0 and complete_time(point_time2, is_start=True)[0] in [complete_time(start1, is_start=True)[0], complete_time(end1, is_start=True)[0]]:
-        #     return 'flag'
-        
-        # if complete_time(point_time2, is_start=True) == complete_time(start1, is_start=True) or complete_time(point_time2, is_start=False) == complete_time(end1, is_start=False):
-        #     return ((complete_time(point_time2), R_S_2), R_S_1, "dot_to_interval_easy")
-        # elif complete_time(start1, is_start=True) < complete_time(point_time2, is_start=False) < complete_time(end1, is_start=False):
-        #     return ((complete_time(point_time2), R_S_2), R_S_1, "dot_to_interval_hard")
-        # else:
-        #     return None
-        
-    # import pdb; pdb.set_trace()
-    # Both are time ranges
+
     start1 = complete_time(start1, is_start=True)
     end1 = complete_time(end1, is_start=False)
     start2 = complete_time(start2, is_start=True)
@@ -171,17 +159,11 @@ def judge_imply(key1, key2,subject1=None,subject2=None,S=True):
 
     if point_time1 is None and point_time2 is None:
         # s2 s1 e1 e2
-        if start1 ==  end2:
+        if (start1 ==  end2) or (start2 ==  end1):
             return 'flag'
-        if start2 ==  end1:
+        if start1[0] ==  end2[0] and ((start1[1] == 0 and end2[1] != 0) or (start1[1] != 0 and end2[1] == 0)):
             return 'flag'
-        if start1[1] == 0 and end2[1] != 0 and  start1[0] ==  end2[0]:
-            return 'flag'
-        if start2[1] == 0 and end1[1] != 0 and start2[0] ==  end1[0]:
-            return 'flag'
-        if start1[1] != 0 and end2[1] == 0 and  start1[0] ==  end2[0]:
-            return 'flag'
-        if start2[1] != 0 and end1[1] == 0 and start2[0] ==  end1[0]:
+        if start2[0] == end1[0] and ((start2[1] == 0 and end1[1] != 0) or (start2[1] != 0 and end1[1] == 0)):
             return 'flag'
         if start1[0] ==  end2[0] and start1[1]==end2[1] and ((start1[2]==0 and end2[2]!=0) or (start1[2]!=0 and end2[2]==0)):
             return 'flag'
@@ -190,19 +172,13 @@ def judge_imply(key1, key2,subject1=None,subject2=None,S=True):
         if start1==start2 and end1==end2:
             return (((start1, end1), R_S_1), R_S_2, "interval_to_interval_equal")
         
-        if start2 < start1 and start1< end1 and end1<= end2:
+        if (start2 < start1 and start1< end1 and end1<= end2) or (start2 <= start1 and start1 < end1 and end1 < end2):
             return (((start1, end1), R_S_1), R_S_2, "interval_to_interval_during")
         
-        if start2 <= start1 and start1 < end1 and end1 < end2:
-            return (((start1, end1), R_S_1), R_S_2, "interval_to_interval_during")        
-        
         # s1 s2 e2 e1
-        if start1 <= start2 and start2 < end2 and end2 < end1:
+        if (start1 <= start2 and start2 < end2 and end2 < end1) or (start1 < start2 and start2 < end2 and end2 <= end1):
             return (((start2, end2), R_S_2), R_S_1, "interval_to_interval_during")
-
-        if start1 < start2 and start2 < end2 and end2 <= end1:
-            return (((start2, end2), R_S_2), R_S_1, "interval_to_interval_during")
-               
+ 
         # s1 s2 e1 e2
         if start1 < start2 and start2 < end1 and end1 < end2:
             return (((start2, end1), R_S_1), R_S_2, 'interval_to_interval_overlap')
