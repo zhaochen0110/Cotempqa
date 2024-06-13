@@ -101,7 +101,7 @@ We welcome contributions to CotempQA! If you have any suggestions or improvement
 
 ## 📜 License
 
-This project is licensed under the CC BY-SA 4.0 license - see the LICENSE file for details.
+This project is licensed under the Apache 2.0 license - see the LICENSE file for details.
 
 ## Acknowledgements
 
