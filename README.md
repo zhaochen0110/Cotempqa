@@ -36,8 +36,8 @@ We propose the CotempQA, the first comprehensive co-temporal Question Answering 
 To get started, clone this repository and install the required packages:
 
 ```bash
-git clone https://github.com/zhaochen0110/conflictbank.git
-cd conflictbank
+git clone https://github.com/zhaochen0110/Cotempqa.git
+cd Cotempqa
 pip install -r requirements.txt
 ```
 
