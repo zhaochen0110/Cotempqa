@@ -56,8 +56,9 @@ Replicate our experimental results by running:
 
 ```bash
 python inference.py --model_name "$model_name" \
---input_dir "$input_dir" \
---out_dir "$out_dir" 
+--mode "$mode" \
+--output_path "$output_path" \
+--result_path "$result_path" 
 ```
 
 ## 🏗️ Datasets Construction
