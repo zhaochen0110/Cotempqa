@@ -10,6 +10,7 @@ We propose the CotempQA, the first comprehensive co-temporal Question Answering 
 
 <hr>
 😎: This is the official implementation repository of our study on co-temporal reasoning capabilities in Large Language Models (LLMs), accepted at ACL 2024 Main Conference.
+
 ## 📊 Leaderboard
 
 | Model           | Equal    | Overlap  | During   | Mix      | Overall  |
