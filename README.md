@@ -56,6 +56,7 @@ Replicate our experimental results by running:
 
 ```bash
 python inference.py --model_name "$model_name" \
+--data_mode "$data_mode" \
 --mode "$mode" \
 --output_path "$output_path" \
 --result_path "$result_path" 
