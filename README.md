@@ -15,7 +15,7 @@ We propose the CotempQA, the first comprehensive co-temporal Question Answering 
 
 | Model           | Overall | Equal  | Overlap | During | Mix  |
 | --------------- | ------- | ------ | ------- | ------ | ---- |
-| Human           | **92.8**    | **97.7**   | **92.3 **   | **84.5**   | **92.1** |
+| Human           | **92.8**    | **97.7**   | **92.3**   | **84.5**   | **92.1** |
 | GPT-4           | 54.7    | 92.7   | 59.4    | 50.1   | 45.0 |
 | GPT-3.5-Turbo   | 38.9    | 62.8   | 44.3    | 37.2   | 23.4 |
 | WizardMath-70B  | 30.1    | 41.8   | 28.6    | 31.3   | 16.6 |
