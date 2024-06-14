@@ -81,15 +81,19 @@ bash prepare_data.sh <path_to_store_wikipedia_dumps> <path_to_store_events>
 We categorize fact pairs into five scenarios based on the consistency or variation of $(\mathcal{S}, \mathcal{R}, \mathcal{O})$. Use the following script to extract co-temporal facts:
 
 ```bash
-python extract.py --output_path test
+python construct_comtempqa.py --rawdata_path <rawdata_path>  \
+                  --qid_path <qid_path> \
+                  --subject_path <subject_path> \
+                  --object_path <object_path> \
+                  --output_path test
 ```
 
 ### QA Pairs Construction
 
 Construct QA pairs using the following command:
 
-```python
-python transfer_template.py
+```bash
+python add_cotemporal_expression.py
 ```
 
 ## 📬 Contact

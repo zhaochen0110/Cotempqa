@@ -195,7 +195,7 @@ def judge_imply(key1, key2,subject1=None,subject2=None,S=True):
         return 'flag'
         
 
-def main(data_level,output_path):
+def main(rawdata_path, qid_path, subject_path, object_path,output_path):
     query_templates = {
         'S1_R1_O2':'templates/level_4.csv',
         'S2_R1_O1':'templates/level_5.csv',
@@ -207,22 +207,17 @@ def main(data_level,output_path):
     during = []
     overlap = []
     mix = []
-    # result_dict = defaultdict(lambda: defaultdict(list))
-    data_file = f'raw_data/ailab_data_{data_level}.tsv'
+
     for mission_name in ['S1_R1_O2', 'S2_R1_O1', 'S1_R2_O2', 'S2_R1_O2', 'S2_R2_O2']:
         same_S_ST_ET = defaultdict(list)
-        point_templates_path = 'generate_point_templates//'+mission_name+'.csv'
-        interval_templates_path = 'generate_interval_templates//'+mission_name+'.csv'
-        rawdata_path = f'raw_data/ailab_data_{data_level}.tsv'
-        qid_path = f'qid/ailab_data_{data_level}.txt'
-        subject_path = f'facts/ailab_{data_level}_subject_fact.json'
-        object_path = f'facts/ailab_{data_level}_object_fact.json'
+        point_templates_path = 'generate_point_templates/'+mission_name+'.csv'
+        interval_templates_path = 'generate_interval_templates/'+mission_name+'.csv'
         question_templates = read_query_templates(query_templates[mission_name])
         name_dict = read_qid_names(qid_path)
         point_templates = read_generate_templates(point_templates_path)
         interval_templates = read_generate_templates(interval_templates_path)
         store_time = {}
-        is_subject = True #判断问题的主体是否是subject，对于S2-R1_O1，其主体是object
+        is_subject = True 
         if 'S2_R1_O1' in mission_name:
             is_subject = False
         if is_subject:
@@ -288,7 +283,7 @@ def main(data_level,output_path):
                 store_time[key]=(start_time,end_time)
 
         if mission_name=='S1_R1_O2':
-            with open(data_file, 'r', newline='', encoding='utf-8') as infile:
+            with open(rawdata_path, 'r', newline='', encoding='utf-8') as infile:
                 tsv_reader = csv.reader(infile, delimiter='\t')
                 for row in tsv_reader:
                     relation, subject, object_, start_time, end_time = row
@@ -298,28 +293,28 @@ def main(data_level,output_path):
             filtered_subjects = {object_: data_list for object_, data_list in same_S_ST_ET.items() if object_[0] in ['P54','P39', 'P102', 'P108', 'P127']}
         
         elif mission_name=='S2_R1_O1':
-            with open(data_file, 'r', newline='', encoding='utf-8') as infile:
+            with open(rawdata_path, 'r', newline='', encoding='utf-8') as infile:
                 tsv_reader = csv.reader(infile, delimiter='\t')
                 for row in tsv_reader:
                     relation, subject, object_, start_time, end_time = row
-                    key = (relation, object_)  # 注意这里，我们用relation, subject, object作为键
+                    key = (relation, object_)  
                     same_S_ST_ET[key].append((subject, start_time, end_time))
             filtered_subjects = {object_: data_list for object_, data_list in same_S_ST_ET.items() if object_[0] in ["P54", "P39", "P108", "P102", "P69", "P488", "P6", "P127"]}
         
         elif mission_name in ['S1_R2_O2','S2_R1_O2','S2_R2_O2']:
             if mission_name=='S1_R2_O2':
-                with open(data_file, 'r', newline='', encoding='utf-8') as infile:
+                with open(rawdata_path, 'r', newline='', encoding='utf-8') as infile:
                     tsv_reader = csv.reader(infile, delimiter='\t')
                     for row in tsv_reader:
                         relation, subject, object_, start_time, end_time = row
-                        key = subject # 注意这里，我们用relation, subject, object作为键
+                        key = subject 
                         same_S_ST_ET[key].append((relation, object_, start_time, end_time))
             else:           
-                with open(data_file, 'r', newline='', encoding='utf-8') as infile:
+                with open(rawdata_path, 'r', newline='', encoding='utf-8') as infile:
                     tsv_reader = csv.reader(infile, delimiter='\t')
                     for row in tsv_reader:
                         relation, subject, object_, start_time, end_time = row
-                        key = subject # 注意这里，我们用relation, subject, object作为键
+                        key = subject 
                         same_S_ST_ET[key].append((relation, object_, start_time, end_time))
             # filtered_subjects = {object_: data_list for object_, data_list in same_S_ST_ET.items() if 4 < len(data_list) < 13}
             filtered_subjects = {object_: data_list for object_, data_list in same_S_ST_ET.items() if 4< len(data_list) < 13}
@@ -331,7 +326,6 @@ def main(data_level,output_path):
                 min_time_units = []
                 flag=0
                 for i in range(len(value_list)):         
-                    # 要求找到value_list所有最小时间单元情况下，不同object的构成情况都要考虑
                     for j in range(i+1, len(value_list)):
                         key1 = value_list[i]
                         key2 = value_list[j]
@@ -444,42 +438,52 @@ def main(data_level,output_path):
                                     overlap.append(new_data)
                                 elif new_data['class'] == 'mix':
                                     mix.append(new_data)
+
     num = min(len(equal), 1000)
     equal = random.sample(equal, num)
-    with open('test/equal.json', 'w', encoding='utf-8') as f:
+    with open(output_path+'/equal.json', 'w', encoding='utf-8') as f:
         for data in equal:
             json_data = json.dumps(data)
             f.write(json_data+'\n')
+            
     num = min(len(during), 1000)
     during = random.sample(during, num)
-    with open('test/during.json', 'w', encoding='utf-8') as f:
+    with open(output_path+'/during.json', 'w', encoding='utf-8') as f:
         for data in during:
             json_data = json.dumps(data)
             f.write(json_data+'\n')
+            
     num = min(len(overlap), 1000)
     overlap = random.sample(overlap, num)
-    with open('test/overlap.json', 'w', encoding='utf-8') as f:
+    with open(output_path+'/overlap.json', 'w', encoding='utf-8') as f:
         for data in overlap:
             json_data = json.dumps(data)
             f.write(json_data+'\n')
+            
     num = min(len(mix), 1000)
     mix = random.sample(mix, num)
-    with open('test/mix.json', 'w', encoding='utf-8') as f:
+    with open(output_path+'/mix.json', 'w', encoding='utf-8') as f:
         for data in mix:
             json_data = json.dumps(data)
             f.write(json_data+'\n')
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(allow_abbrev=False)
-    parser.add_argument('--mission_name', type=str, metavar='N',
-                   default='S1_R1_O2.json', help='which kind structured data to generate') 
-    parser.add_argument('--data_level',
+    parser.add_argument('--rawdata_path',
                 type=str,
-                default='v3',
-                help='the amount of the raw data') 
+                help='raw data') 
+    parser.add_argument('--qid_path',
+                type=str,
+                help='qid names') 
+    parser.add_argument('--subject_path',
+                type=str,
+                help='facts about subject') 
+    parser.add_argument('--object_path',
+                type=str,
+                help='facts about object') 
     parser.add_argument('--output_path',
                 type=str,
                 default='data_without_temporal_expression',
                 help='where to store the data')  
     args = parser.parse_args()
-    main(args.data_level,args.output_path)
+    main(args.rawdata_path, args.qid_path, args.subject_path, args.object_path, args.output_path)
