@@ -116,3 +116,12 @@ This project is based on the work done in [TempLAMA](https://github.com/google-r
 
 If you find our work useful, please consider citing our paper:
 
+```
+@misc{su2024living,
+      title={Living in the Moment: Can Large Language Models Grasp Co-Temporal Reasoning?}, 
+      author={Zhaochen Su and Juntao Li and Jun Zhang and Tong Zhu and Xiaoye Qu and Pan Zhou and Yan Bowen and Yu Cheng and Min zhang},
+      year={2024},
+      eprint={2406.09072},
+      archivePrefix={arXiv}
+}
+```
