@@ -207,6 +207,17 @@ def main(rawdata_path, qid_path, subject_path, object_path,output_path):
     during = []
     overlap = []
     mix = []
+    equal_limit = 200
+    overlap_limit = 200
+    during_limit = 200
+    mix_limit = 200
+    cnt = {
+        'S1_R1_O2': {'equal':0 ,'mix':0 , 'during':0, 'overlap':0},
+        'S2_R1_O1': {'equal':0 ,'mix':0 , 'during':0, 'overlap':0},
+        'S1_R2_O2': {'equal':0 ,'mix':0 , 'during':0, 'overlap':0},
+        'S2_R1_O2': {'equal':0 ,'mix':0 , 'during':0, 'overlap':0},
+        'S2_R2_O2': {'equal':0 ,'mix':0 , 'during':0, 'overlap':0}
+    }
 
     for mission_name in ['S1_R1_O2', 'S2_R1_O1', 'S1_R2_O2', 'S2_R1_O2', 'S2_R2_O2']:
         same_S_ST_ET = defaultdict(list)
@@ -309,6 +320,7 @@ def main(rawdata_path, qid_path, subject_path, object_path,output_path):
                         relation, subject, object_, start_time, end_time = row
                         key = subject 
                         same_S_ST_ET[key].append((relation, object_, start_time, end_time))
+                filtered_subjects = {object_: data_list for object_, data_list in same_S_ST_ET.items() if 6< len(data_list) < 10}
             else:           
                 with open(rawdata_path, 'r', newline='', encoding='utf-8') as infile:
                     tsv_reader = csv.reader(infile, delimiter='\t')
@@ -317,14 +329,16 @@ def main(rawdata_path, qid_path, subject_path, object_path,output_path):
                         key = subject 
                         same_S_ST_ET[key].append((relation, object_, start_time, end_time))
             # filtered_subjects = {object_: data_list for object_, data_list in same_S_ST_ET.items() if 4 < len(data_list) < 13}
-            filtered_subjects = {object_: data_list for object_, data_list in same_S_ST_ET.items() if 6< len(data_list) < 10}
+                filtered_subjects = {object_: data_list for object_, data_list in same_S_ST_ET.items() if 6< len(data_list) < 8}
         
         if mission_name in ['S2_R1_O1','S1_R2_O2','S1_R1_O2']:
-
+            exit_flag = False
             for key, value_list in tqdm(filtered_subjects.items()):
                 # import pdb; pdb.set_trace()
                 min_time_units = []
                 flag=0
+                if exit_flag:
+                    break
                 for i in range(len(value_list)):         
                     for j in range(i+1, len(value_list)):
                         key1 = value_list[i]
@@ -368,21 +382,34 @@ def main(rawdata_path, qid_path, subject_path, object_path,output_path):
                     if data != []:
                         for k in data:
                             new_data = classify_data(k)
-                            if new_data['class'] == 'equal':
+                            # print(type(cnt[mission_name]))
+                            if new_data['class'] == 'equal' and cnt[mission_name]['equal'] < equal_limit:
                                 equal.append(new_data)
-                            elif new_data['class'] == 'during':
+                                cnt[mission_name]['equal'] += 1
+                            elif new_data['class'] == 'during' and cnt[mission_name]['during'] < during_limit:
                                 during.append(new_data)
-                            elif new_data['class'] == 'overlap':
+                                cnt[mission_name]['during'] += 1
+                            elif new_data['class'] == 'overlap' and cnt[mission_name]['overlap'] < overlap_limit:
                                 overlap.append(new_data)
-                            elif new_data['class'] == 'mix':
+                                cnt[mission_name]['overlap'] += 1
+                            elif new_data['class'] == 'mix' and cnt[mission_name]['mix'] < mix_limit:
                                 mix.append(new_data)
+                                cnt[mission_name]['mix'] += 1
+                            if cnt[mission_name]['equal'] == equal_limit and cnt[mission_name]['during'] == during_limit and cnt[mission_name]['overlap'] == overlap_limit and cnt[mission_name]['mix'] == mix_limit:
+                                exit_flag = True
+                                break
                     # output_list.append(data)
                     # json_data = json.dumps(current_data)
                     # json_file.write(json_data + '\n')
 
         else:
+            exit_flag = False
             for i, (key1, value_list1) in enumerate(tqdm(filtered_subjects.items())):
+                if exit_flag:
+                    break
                 for j, (key2, value_list2) in enumerate(filtered_subjects.items()):
+                    if exit_flag:
+                        break
                     if j <= i:  # 跳过重复的和自身的比较
                         continue
                     min_time_units = []
@@ -430,15 +457,22 @@ def main(rawdata_path, qid_path, subject_path, object_path,output_path):
                         if data!=[]:
                             for k in data:
                                 new_data = classify_data(k)
-                                if new_data['class'] == 'equal':
+                                if new_data['class'] == 'equal' and cnt[mission_name]['equal'] < equal_limit:
                                     equal.append(new_data)
-                                elif new_data['class'] == 'during':
+                                    cnt[mission_name]['equal'] += 1
+                                elif new_data['class'] == 'during' and cnt[mission_name]['during'] < during_limit:
                                     during.append(new_data)
-                                elif new_data['class'] == 'overlap':
+                                    cnt[mission_name]['during'] += 1
+                                elif new_data['class'] == 'overlap' and cnt[mission_name]['overlap'] < overlap_limit:
                                     overlap.append(new_data)
-                                elif new_data['class'] == 'mix':
+                                    cnt[mission_name]['overlap'] += 1
+                                elif new_data['class'] == 'mix' and cnt[mission_name]['mix'] < mix_limit:
                                     mix.append(new_data)
-                        break
+                                    cnt[mission_name]['mix'] += 1
+                                if cnt[mission_name]['equal'] == equal_limit and cnt[mission_name]['during'] == during_limit and cnt[mission_name]['overlap'] == overlap_limit and cnt[mission_name]['mix'] == mix_limit:
+                                    exit_flag = True
+                                    break
+                        # break
 
     num = min(len(equal), 1000)
     equal = random.sample(equal, num)
