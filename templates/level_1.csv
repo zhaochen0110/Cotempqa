@@ -1,0 +1,11 @@
+Wikidata ID,Relation,Template
+P54,member of sports team,Which team did <subject> play for
+P39,position held,Which position did <subject> hold
+P108,employer,Which employer did <subject> work for
+P102,political party,Which political party did <subject> belong to
+P286,head coach,Who was the head coach of <subject>
+P69,educated at,Which school was <subject> attending
+P488,chairperson,Who was the chair of <subject>
+P6,head of government,Who was the head of the government of <subject>
+P127,owned by,Who was the owner of <subject>
+

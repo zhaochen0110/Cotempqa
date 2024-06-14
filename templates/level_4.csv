@@ -1,0 +1,5 @@
+Wikidata ID,Relation,Template
+P39,position held,"While <subject1> was holding the position of <object1>, which position did <subject1> "
+P102,political party,"While <subject1> was a member of <object1>, which political party did <subject1> belong to "
+P108,employer,"While <subject1> was working for <object1>, which employer did <subject1> work for "
+P127,owned by,"While <subject1> was owned by <object1>, who was the owner of <subject1> "

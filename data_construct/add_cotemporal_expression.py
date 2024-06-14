@@ -22,7 +22,7 @@ def random_generate(input_file, output_file1):
             f.write(json_data + '\n')
 
     print(f"save in {output_file1}") 
-
+    
 def template_generate(input_file, output_file, expression=expression_list[0]):
     items = []
     with open(input_file, 'r') as fin:
@@ -37,8 +37,8 @@ def template_generate(input_file, output_file, expression=expression_list[0]):
             f.write(json_data + '\n')
 
     print(f"save in {output_file}") 
-  
-  
+
+
 if __name__ == '__main__':  
     for file_name in ['S1_R1_O2.json','S1_R2_O2.json','S2_R1_O1.json','S2_R1_O2.json','S2_R2_O2.json']:
         input_file = 'data_without_temporal_expression/' + file_name

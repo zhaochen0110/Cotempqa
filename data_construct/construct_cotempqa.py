@@ -5,8 +5,8 @@ from collections import Counter
 import random
 from tqdm import tqdm
 import argparse
-from data_construct.structured_to_query import *
-from data_construct.classify_data import * 
+from structured_to_query import *
+from classify_data import * 
 
 ## transfer the time into int tuple 
 def complete_time(time):
@@ -150,10 +150,10 @@ def judge_imply(key1, key2,subject1=None,subject2=None,S=True):
         else:
             return 'flag'        
 
-    start1 = complete_time(start1, is_start=True)
-    end1 = complete_time(end1, is_start=False)
-    start2 = complete_time(start2, is_start=True)
-    end2 = complete_time(end2, is_start=False)
+    start1 = complete_time(start1)
+    end1 = complete_time(end1)
+    start2 = complete_time(start2)
+    end2 = complete_time(end2)
 
     # import pdb; pdb.set_trace()
 
@@ -317,7 +317,7 @@ def main(rawdata_path, qid_path, subject_path, object_path,output_path):
                         key = subject 
                         same_S_ST_ET[key].append((relation, object_, start_time, end_time))
             # filtered_subjects = {object_: data_list for object_, data_list in same_S_ST_ET.items() if 4 < len(data_list) < 13}
-            filtered_subjects = {object_: data_list for object_, data_list in same_S_ST_ET.items() if 4< len(data_list) < 13}
+            filtered_subjects = {object_: data_list for object_, data_list in same_S_ST_ET.items() if 6< len(data_list) < 10}
         
         if mission_name in ['S2_R1_O1','S1_R2_O2','S1_R1_O2']:
 
@@ -438,6 +438,7 @@ def main(rawdata_path, qid_path, subject_path, object_path,output_path):
                                     overlap.append(new_data)
                                 elif new_data['class'] == 'mix':
                                     mix.append(new_data)
+                        break
 
     num = min(len(equal), 1000)
     equal = random.sample(equal, num)

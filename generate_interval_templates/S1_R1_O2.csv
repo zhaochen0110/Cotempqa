@@ -1,0 +1,5 @@
+Relation,Templates
+P39,<subject1> holds the position of <object1> from <st> to <et>.
+P102,<subject1> is a member of the <object1> from <st> to <et>.
+P108,<subject1> worked for <object1> from <st> to <et>.
+P127,<subject1> is owned by <object1> from <st> to <et>.

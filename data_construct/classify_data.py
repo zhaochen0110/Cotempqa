@@ -173,11 +173,16 @@ def classify_data(data):
                             else:
                                 alternative_answers_with_time[extract_content] = [time_transfer(start_time)]     
         new = sorted(alternative_answers_with_time.items(),key = lambda x:len(x[0]),reverse=True)   
+        
+        condition_time = False
         for item in new:
             if item[0] in question and item[0] not in answer:
                 condition_time = item[1]
                 break
         answer_time_cnt = {}
+        if not condition_time:
+            data = {'class': False}
+            return data
 
         for item in new:
             if item[0] in answer:

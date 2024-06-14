@@ -1,0 +1,7 @@
+Wikidata ID,Relation,Template
+P39-P108, position held/employer,"While <subject1> was holding the position of <object1>, which employer did <subject2> work for "
+P54-P286, member of sports team/head coach,"While <subject1> was a member of <object1>, who was the head coach of <subject2> "
+P39-P6, position held/head of government,"While <subject1> was holding the position of <object1>, who was the head of the government of <subject2> "
+P102-P6, employer/educated at,"While <subject1> was a member of <object1>, who was the head of the government of <subject2> "
+P127-P488, owned by/chairperson,"While <subject1> was owned by <object1>, who was the chair of <subject2> "
+P69-P39, educated at/position held,"While <subject1> attended <object1>, which position did <subject2> hold "

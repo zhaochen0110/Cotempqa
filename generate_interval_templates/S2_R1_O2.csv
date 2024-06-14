@@ -1,0 +1,10 @@
+Relation,Templates
+P39,<subject1> holds the position of <object1> from <st> to <et>.
+P102,<subject1> is a member of the <object1> from <st> to <et>.
+P108,<subject1> works for <object1> from <st> to <et>.
+P127,<subject1> is owned by <object1> from <st> to <et>.
+P6,<subject1> is the head of <object1> from <st> to <et>.
+P488,<subject1> is the chair of <object1> from <st> to <et>.
+P69,<subject1> attended <object1> from <st> to <et>.
+P54,<subject1> plays for <object1> from <st> to <et>.
+P286,<subject1> is the head coach of <object1> from <st> to <et>.
