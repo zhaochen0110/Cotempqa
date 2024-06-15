@@ -85,7 +85,7 @@ python construct_comtempqa.py --rawdata_path <rawdata_path>  \
                   --qid_path <qid_path> \
                   --subject_path <subject_path> \
                   --object_path <object_path> \
-                  --output_path test
+                  --output_path <output_path>
 ```
 
 ### QA Pairs Construction
