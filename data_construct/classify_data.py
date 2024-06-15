@@ -181,8 +181,7 @@ def classify_data(data):
                 break
         answer_time_cnt = {}
         if not condition_time:
-            data = {'class': False}
-            return data
+            return None
 
         for item in new:
             if item[0] in answer:
@@ -254,4 +253,6 @@ def classify_data(data):
                 'is_subject':is_subject
             }
             return data
+
+
 
