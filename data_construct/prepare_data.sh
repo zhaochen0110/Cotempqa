@@ -1,4 +1,3 @@
-
 SLING_BASE="$1"
 OUT_BASE="$2"
 
@@ -25,4 +24,5 @@ python3 sling2facts.py \
   --frame_to_echo="Q1079" \
   --inherit_props_from_entity="P580,P582,P585" \
   --logtostderr
+
 
