@@ -203,23 +203,9 @@ def main(rawdata_path, qid_path, subject_path, object_path,output_path):
         'S2_R1_O2':'templates/level_7.csv',
         'S2_R2_O2':'templates/level_8.csv'
                        }
-    equal = []
-    during = []
-    overlap = []
-    mix = []
-    equal_limit = 200
-    overlap_limit = 200
-    during_limit = 200
-    mix_limit = 200
-    cnt = {
-        'S1_R1_O2': {'equal':0 ,'mix':0 , 'during':0, 'overlap':0},
-        'S2_R1_O1': {'equal':0 ,'mix':0 , 'during':0, 'overlap':0},
-        'S1_R2_O2': {'equal':0 ,'mix':0 , 'during':0, 'overlap':0},
-        'S2_R1_O2': {'equal':0 ,'mix':0 , 'during':0, 'overlap':0},
-        'S2_R2_O2': {'equal':0 ,'mix':0 , 'during':0, 'overlap':0}
-    }
 
     for mission_name in ['S1_R1_O2', 'S2_R1_O1', 'S1_R2_O2', 'S2_R1_O2', 'S2_R2_O2']:
+        constructed_data = []
         same_S_ST_ET = defaultdict(list)
         point_templates_path = 'generate_point_templates/'+mission_name+'.csv'
         interval_templates_path = 'generate_interval_templates/'+mission_name+'.csv'
@@ -260,6 +246,7 @@ def main(rawdata_path, qid_path, subject_path, object_path,output_path):
             relation_limit = ['P39', 'P102', 'P108', 'P127','P6',"P69",'P488','P54','P286']
         elif 'S2_R2_O2' in mission_name:
             relation_limit = ['P39', 'P102', 'P108', 'P127','P6',"P69",'P488','P54','P286']
+            
         if is_subject:
             with open(DA_path, 'r') as f:  #我们这里将获取数据扩充所需要用到的对象，原则是首先获得不同的关系对应有哪些subject或者object
                 for l in f:
@@ -320,7 +307,7 @@ def main(rawdata_path, qid_path, subject_path, object_path,output_path):
                         relation, subject, object_, start_time, end_time = row
                         key = subject 
                         same_S_ST_ET[key].append((relation, object_, start_time, end_time))
-                filtered_subjects = {object_: data_list for object_, data_list in same_S_ST_ET.items() if 6< len(data_list) < 10}
+                filtered_subjects = {object_: data_list for object_, data_list in same_S_ST_ET.items()}
             else:           
                 with open(rawdata_path, 'r', newline='', encoding='utf-8') as infile:
                     tsv_reader = csv.reader(infile, delimiter='\t')
@@ -329,7 +316,9 @@ def main(rawdata_path, qid_path, subject_path, object_path,output_path):
                         key = subject 
                         same_S_ST_ET[key].append((relation, object_, start_time, end_time))
             # filtered_subjects = {object_: data_list for object_, data_list in same_S_ST_ET.items() if 4 < len(data_list) < 13}
-                filtered_subjects = {object_: data_list for object_, data_list in same_S_ST_ET.items() if 6< len(data_list) < 8}
+                filtered_subjects = {object_: data_list for object_, data_list in same_S_ST_ET.items() if 4< len(data_list) < 13}
+                filtered_subjects = random.sample(filtered_subjects.items(), 4000)
+                filtered_subjects = {item[0]:item[1] for item in filtered_subjects}        
         
         if mission_name in ['S2_R1_O1','S1_R2_O2','S1_R1_O2']:
             exit_flag = False
@@ -371,36 +360,14 @@ def main(rawdata_path, qid_path, subject_path, object_path,output_path):
                         "entity": subject,
                         "relation": relation,
                         "query": min_time_units
-                        }                    
+                        }                 
                     else:
                         subject = key
                         current_data = {
                             "entity": subject,
                             "query": min_time_units
                         }
-                    data = data_generate(mission_name, question_templates, current_data, store_time, point_templates, interval_templates, name_dict, fact_dict, DA_object, time_search, is_subject)
-                    if data != []:
-                        for k in data:
-                            new_data = classify_data(k)
-                            # print(type(cnt[mission_name]))
-                            if new_data['class'] == 'equal' and cnt[mission_name]['equal'] < equal_limit:
-                                equal.append(new_data)
-                                cnt[mission_name]['equal'] += 1
-                            elif new_data['class'] == 'during' and cnt[mission_name]['during'] < during_limit:
-                                during.append(new_data)
-                                cnt[mission_name]['during'] += 1
-                            elif new_data['class'] == 'overlap' and cnt[mission_name]['overlap'] < overlap_limit:
-                                overlap.append(new_data)
-                                cnt[mission_name]['overlap'] += 1
-                            elif new_data['class'] == 'mix' and cnt[mission_name]['mix'] < mix_limit:
-                                mix.append(new_data)
-                                cnt[mission_name]['mix'] += 1
-                            if cnt[mission_name]['equal'] == equal_limit and cnt[mission_name]['during'] == during_limit and cnt[mission_name]['overlap'] == overlap_limit and cnt[mission_name]['mix'] == mix_limit:
-                                exit_flag = True
-                                break
-                    # output_list.append(data)
-                    # json_data = json.dumps(current_data)
-                    # json_file.write(json_data + '\n')
+                    constructed_data.append(current_data)
 
         else:
             exit_flag = False
@@ -446,61 +413,45 @@ def main(rawdata_path, qid_path, subject_path, object_path,output_path):
                     if min_time_units != []:
                         if mission_name == 'S2_R1_O2':
                             subject = (key1, key2)  # Split the key into relation and subject
+                            current_data = {
+                                "entity_pair": subject,
+                                "query": min_time_units
+                            }
                         else:
                             subject = (key1, key2, relation1, relation2)  # Split the key into relation and subject
                         # Initialize the dictionary for this particular relation and subject
-                        current_data = {
-                            "entity_pair": subject,
-                            "query": min_time_units
-                        }
-                        data = data_generate(mission_name, question_templates, current_data, store_time, point_templates, interval_templates, name_dict, fact_dict, DA_object, time_search, is_subject)
-                        if data!=[]:
-                            for k in data:
-                                new_data = classify_data(k)
-                                if new_data['class'] == 'equal' and cnt[mission_name]['equal'] < equal_limit:
-                                    equal.append(new_data)
-                                    cnt[mission_name]['equal'] += 1
-                                elif new_data['class'] == 'during' and cnt[mission_name]['during'] < during_limit:
-                                    during.append(new_data)
-                                    cnt[mission_name]['during'] += 1
-                                elif new_data['class'] == 'overlap' and cnt[mission_name]['overlap'] < overlap_limit:
-                                    overlap.append(new_data)
-                                    cnt[mission_name]['overlap'] += 1
-                                elif new_data['class'] == 'mix' and cnt[mission_name]['mix'] < mix_limit:
-                                    mix.append(new_data)
-                                    cnt[mission_name]['mix'] += 1
-                                if cnt[mission_name]['equal'] == equal_limit and cnt[mission_name]['during'] == during_limit and cnt[mission_name]['overlap'] == overlap_limit and cnt[mission_name]['mix'] == mix_limit:
-                                    exit_flag = True
-                                    break
-                        # break
-
-    num = min(len(equal), 1000)
-    equal = random.sample(equal, num)
-    with open(output_path+'/equal.json', 'w', encoding='utf-8') as f:
-        for data in equal:
-            json_data = json.dumps(data)
-            f.write(json_data+'\n')
-            
-    num = min(len(during), 1000)
-    during = random.sample(during, num)
-    with open(output_path+'/during.json', 'w', encoding='utf-8') as f:
-        for data in during:
-            json_data = json.dumps(data)
-            f.write(json_data+'\n')
-            
-    num = min(len(overlap), 1000)
-    overlap = random.sample(overlap, num)
-    with open(output_path+'/overlap.json', 'w', encoding='utf-8') as f:
-        for data in overlap:
-            json_data = json.dumps(data)
-            f.write(json_data+'\n')
-            
-    num = min(len(mix), 1000)
-    mix = random.sample(mix, num)
-    with open(output_path+'/mix.json', 'w', encoding='utf-8') as f:
-        for data in mix:
-            json_data = json.dumps(data)
-            f.write(json_data+'\n')
+                            current_data = {
+                                "entity_pair": subject,
+                                "query": min_time_units
+                            }
+                        constructed_data.append(current_data)
+        
+        all_data = []
+        for current_data in constructed_data:
+            data = data_generate(mission_name, question_templates, current_data, store_time, point_templates, interval_templates, name_dict, fact_dict, DA_object, time_search, is_subject)
+            if data!=[]:
+                for k in data:
+                    new_data = classify_data(k)
+                    if new_data:
+                        all_data.append(new_data)
+        all_data = random.sample(all_data, 1000)
+        for data in all_data:
+            if data['class'] == 'equal':
+                with open(output_path+'/equal.json', 'a', encoding='utf-8') as f:
+                    json_data = json.dumps(data)
+                    f.write(json_data+'\n')
+            elif data['class'] == 'during':
+                with open(output_path+'/during.json', 'a', encoding='utf-8') as f:
+                    json_data = json.dumps(data)
+                    f.write(json_data+'\n')
+            elif data['class'] == 'overlap':
+                with open(output_path+'/overlap.json', 'a', encoding='utf-8') as f:
+                    json_data = json.dumps(data)
+                    f.write(json_data+'\n')
+            elif data['class'] == 'mix':
+                with open(output_path+'/mix.json', 'a', encoding='utf-8') as f:
+                    json_data = json.dumps(data)
+                    f.write(json_data+'\n')
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(allow_abbrev=False)
