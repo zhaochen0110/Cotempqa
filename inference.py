@@ -5,6 +5,8 @@ from config import *
 import os
 from vllm import LLM, SamplingParams
 
+default_template = 'Answer the question based on the context:\n{fact}\nQuestion: {question}\nOnly return the answer.\n'
+
 few_shot_template = '''Answer the question based on the context:\nValdis Dombrovskis holds the position of Vice-President of the European Commission in December 1, 2019.\nValdis Dombrovskis holds the position of European Commissioner for Internal Market and Services from July 16, 2016 to October 12, 2020.\nValdis Dombrovskis holds the position of European Commissioner for Trade in August 26, 2020.\nValdis Dombrovskis holds the position of European Commissioner for An Economy that Works for People in December 1, 2019.\nValdis Dombrovskis holds the position of Prime Minister of Latvia from March 12, 2009 to January 22, 2014.\nValdis Dombrovskis holds the position of Minister of Finance from November 7, 2002 to March 9, 2004.\nQuestion: While Valdis Dombrovskis was holding the position of European Commissioner for Trade, which position did Valdis Dombrovskis during the identical time period?\nOnly return the answer.
 European Commissioner for Internal Market and Services
 Answer the question based on the context:\nKamari Maxine Clarke works for Yale University from 1999 to 2012.\nKamari Maxine Clarke attended Yale Law School in 2003.\nKamari Maxine Clarke works for Carleton University from 2015 to 2019.\nKamari Maxine Clarke works for University of Pennsylvania from 2012 to 2015.\nKamari Maxine Clarke attended University of California, Santa Cruz in 1997.\nQuestion: While Kamari Maxine Clarke attended Yale Law School, which employer did Kamari Maxine Clarke work for during the identical time period?\nOnly return the answer.
@@ -42,23 +44,19 @@ Answer:\nAccording to the context, Russell Keat attended Merton College in 1967.
 Answer the question based on the context:\n{fact}\nQuestion:{question}\nAnswer:\nAccording to the context,'''
 
 def get_prompts(all_inputs, template):
-    """
-    Generate prompts from the input data using the provided template.
-    """
     all_outputs = []
     for input in all_inputs:
-        fact_str = "\n".join(input['facts'])
+        fact_str = ""
+        for i in input['facts']:
+            fact_str += i + '\n'
         output = template.format(
-            fact=fact_str,
-            question=input['question']
+            fact = fact_str,
+            question = input['question']
         )
         all_outputs.append(output)
     return all_outputs
 
 def evaluate_cotemporal(model_name, data_path, mode, output_dir, evaluate_result_dir):
-    """
-    Evaluate the co-temporal reasoning capabilities of a model on a dataset.
-    """
     all_data = []
     with open(data_path, 'r', encoding='utf-8') as f:
         for line in f:
@@ -66,9 +64,11 @@ def evaluate_cotemporal(model_name, data_path, mode, output_dir, evaluate_result
             all_data.append(data)
             
     llm = LLM(model=model_name, tensor_parallel_size=4)
-    sampling_params = SamplingParams(temperature=0, max_tokens=300)
+    sampling_params = SamplingParams(temperature=0, max_tokens=150)
     
-    if mode == 'few_shot':
+    if mode == 'default':
+        all_prompts = get_prompts(all_data, default_template)
+    elif mode == 'few_shot':
         all_prompts = get_prompts(all_data, few_shot_template)
     elif mode == 'few_shot_cot':
         all_prompts = get_prompts(all_data, few_shot_cot_template)
@@ -82,25 +82,18 @@ def evaluate_cotemporal(model_name, data_path, mode, output_dir, evaluate_result
     output_data = []
     for prompt, input, output in zip(all_prompts, all_data, all_outputs):
         prompt = 'Answer the question based on the context:' + prompt.split('Answer the question based on the context:')[-1]
-        output_data.append({
-            'input': prompt,
-            'prediction': output,
-            'gold': input['answer'],
-            'triple_element': input['triple_element'],
-            'question': input['question'],
-            'facts': input['facts']
-        })
+        output_data.append({'input': prompt, 'prediction': output, 'gold': input['answer'], 'triple_element': input['triple_element'], 'question': input['question'], 'facts': input['facts']})
     
-    filename = os.path.basename(data_path)
-    output_path = os.path.join(output_dir, f"{mode}_{filename}")
+    filename = data_path.split("/")[-1]
+    output_path =  output_dir + '/' + mode + '_' + filename
     
-    with open(output_path, 'w', encoding='utf-8') as f:
+    with open(output_path, 'w', encoding = 'utf-8') as f:
         for data in output_data:
             json_data = json.dumps(data)
             f.write(json_data + '\n')
             
     result = main(output_data, mode)
-    evaluate_result_path = os.path.join(evaluate_result_dir, f"{mode}_{filename}")
+    evaluate_result_path = evaluate_result_dir+'/'+mode+'_'+filename
     with open(evaluate_result_path, 'w', encoding='utf-8') as f:
         json_data = json.dumps(result)
         f.write(json_data + '\n')
