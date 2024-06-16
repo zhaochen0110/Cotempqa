@@ -191,12 +191,12 @@ def read_facts(facts_file, qid_mapping, qid_names, min_year):
 def read_qid_names(filepath):   
     name_dict = {}
     with open(filepath, 'r', encoding='utf-8') as file:
-        try:
-            for line in file:
+        for line in file:
+            try:
                 key, value = line.strip().split('\t')
                 name_dict[key] = value
-        except Exception as e:
-            print("An error occurred:", e)
+            except Exception as e:
+                continue
     return name_dict
 
 def read_tsv(filepath):
