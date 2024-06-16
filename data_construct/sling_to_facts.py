@@ -235,7 +235,7 @@ def main(_):
   all_data = read_tsv(raw_data_path)
   name_dict = read_qid_names(qid_path)
 
-  subject_output_path = 'subject_facts.json'
+  subject_output_path = '/opt/data/private/szc/Cotempqa/raw_data/subject_facts.json'
   with open(subject_output_path, 'w', encoding='utf-8') as f:
       ind = 0
       while ind < len(all_data):
@@ -261,31 +261,29 @@ def main(_):
               json_item = json.dumps(item)
               f.write(json_item + '\n')
 
-  object_output_path = 'object_facts.json'
+  object_output_path = '/opt/data/private/szc/Cotempqa/raw_data/object_facts.json'
+  object_used = set()
   with open(object_output_path, 'w', encoding='utf-8') as f:
-      ind = 0
-      while ind < len(all_data):
-          data = all_data[ind]
-          entity = data[2]
-          if entity not in name_dict:
-              ind += 1
-          else:
-              qid_name = name_dict[entity]
-              data_list = []
-              while entity == data[2]:
-                  data_list.append([data[0], data[1], data[3], data[4]])
-                  ind += 1
-                  if ind < len(all_data):
-                      data = all_data[ind]
-                  else:
-                      break
-              item = {
-                  'entity': entity,
-                  'name': qid_name,
-                  'data_list': data_list
-              }
-              json_item = json.dumps(item)
-              f.write(json_item + '\n')
+      for i in range(len(all_data)):
+        data = all_data[i]
+        entity = data[2]
+        if entity not in qid_dict:
+          qid_name = name_dict[entity]
+        if entity in object_used:
+          continue
+        data_list = []
+        object_used.add(entity)
+        for j in range(i+1, len(all_data)):
+          if entity == all_data[j][2]:
+            data_list.append([data[0], data[1], data[3], data[4]]) 
+        if data_list!=[]:
+          item = {
+              'entity': entity,
+              'name': qid_name,
+              'data_list': data_list
+          }
+          json_item = json.dumps(item)
+          f.write(json_item + '\n')
 
 if __name__ == "__main__":
   app.run(main)
