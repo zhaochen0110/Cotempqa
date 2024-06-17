@@ -267,7 +267,7 @@ def main(_):
       for i in range(len(all_data)):
         data = all_data[i]
         entity = data[2]
-        if entity not in qid_dict:
+        if entity not in name_dict:
           qid_name = name_dict[entity]
         if entity in object_used:
           continue
