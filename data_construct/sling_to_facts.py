@@ -291,6 +291,7 @@ def main(_):
                     fact += ' from {0} to {1}.'.format(start, end)
                     facts.append(fact)   
                     ind += 1
+                  data = all_data[ind]
               if len(data_list)>1:
                 item = {
                     'entity': entity,
