@@ -1,8 +1,0 @@
-Wikidata ID,Relation,Template
-P54,member of sports team,"While <subject1> was playing for <object1>, which team did <subject2> play for "
-P39,position held,"While <subject1> was holding the position of <object1>, which position did <subject2> hold "
-P108,employer,"While <subject1> was working for <object1>, which employer did <subject2> work for "
-P102,political party,"While <subject1> was a member of <object1>, which political party did <subject2> belong to "
-P286,head coach,"While <subject1> was the head coach of <object1>, Who was the head coach of <subject2> "
-P69,educated at,"While <subject1> attended <object1>, which school was <subject2> attending "
-P127,owned by,"While <subject1> was owned by <object1>, who was the owner of <subject2> "
