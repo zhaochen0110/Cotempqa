@@ -25,7 +25,7 @@ python3 sling2facts.py \
   --inherit_props_from_entity="P580,P582,P585" \
   --logtostderr
 
-python3 sling_to_facts.py \
+python3 facts_to_raw_data.py \
   --out_dir=$TEMPOUT \
   --facts_file=$WIKIOUT/kb.cfacts \
   --sling_kb_file=$SLING_KB \
