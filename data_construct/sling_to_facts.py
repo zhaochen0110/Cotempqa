@@ -44,7 +44,7 @@ WIKI_PRE = "/wp/en/"
 def read_templates(filepath):
     with open(filepath, 'r') as file:
         reader = csv.DictReader(file)
-        return {row["Relation"]: row["Template"] for row in reader}
+        return {row["Wikidata ID"]: row["Template"] for row in reader}
 
 def parse_date(date_str):
   """Try to parse date from string.
@@ -228,22 +228,22 @@ def complete_time(time):
 
 def main(_):
   # Load relation templates.
-  # templates = read_templates()
+  templates = read_templates()
 
-  # # Load entity names, number of facts and wiki page titles from SLING.
+  # Load entity names, number of facts and wiki page titles from SLING.
   qid_names, qid_mapping, qid_numfacts = load_sling_mappings(
       FLAGS.sling_kb_file, FLAGS.sling_wiki_mapping_file)
   print('qid_names_len',len(qid_names))
   # Load facts with qualifiers.
   all_facts = read_facts(FLAGS.facts_file, qid_mapping, qid_names, FLAGS.min_year)
-  qid_path = 'qid_names.txt'
+  qid_path = 'Cotempqa/raw_data/qid_names.txt'
   with open(qid_path, 'w', encoding='utf-8') as file:
       for key, value in qid_names.items():
           file.write(f"{key}\t{value}\n")
   logging.info(f"Saved qid_names to {qid_path}")
   # Create queries.
-  raw_data_path = "all_kg.tsv"
-  # all_facts = [['P54', 'Q18638850', 'Q514714', (2014, None, None), (2014, None, None)], ['P26', 'Q6788484', 'Q229507', (1964, None, None), (1966, None, None)], ['P97', 'Q969823', 'Q3519259', (1808, 3, 19), None], ['P410', 'Q969823', 'Q2487961', (1797, 5, 2), None], ['P2962', 'Q27527529', 'Q105269', (2016, None, None), None], ['P54', 'Q2017737', 'Q499616', (1971, None, None), (1972, None, None)], ['P54', 'Q2017737', 'Q249643', (1974, None, None), (1974, None, None)], ['P54', 'Q2017737', 'Q248765', (1972, None, None), (1973, None, None)], ['P54', 'Q7938967', 'Q181216', (1986, None, None), (1988, None, None)], ['P54', 'Q7938967', 'Q154293', (1992, None, None), (1994, None, None)], ['P54', 'Q7938967', 'Q647893', (1998, None, None), (2000, None, None)], ['P54', 'Q7938967', 'Q155730', (2000, None, None), (2002, None, None)], ['P1435', 'Q5139009', 'Q15700834', (1955, 6, 21), None]]
+  raw_data_path = "Cotempqa/raw_data/all_kg.tsv"
+  all_facts = [['P54', 'Q18638850', 'Q514714', (2014, None, None), (2014, None, None)], ['P26', 'Q6788484', 'Q229507', (1964, None, None), (1966, None, None)], ['P97', 'Q969823', 'Q3519259', (1808, 3, 19), None], ['P410', 'Q969823', 'Q2487961', (1797, 5, 2), None], ['P2962', 'Q27527529', 'Q105269', (2016, None, None), None], ['P54', 'Q2017737', 'Q499616', (1971, None, None), (1972, None, None)], ['P54', 'Q2017737', 'Q249643', (1974, None, None), (1974, None, None)], ['P54', 'Q2017737', 'Q248765', (1972, None, None), (1973, None, None)], ['P54', 'Q7938967', 'Q181216', (1986, None, None), (1988, None, None)], ['P54', 'Q7938967', 'Q154293', (1992, None, None), (1994, None, None)], ['P54', 'Q7938967', 'Q647893', (1998, None, None), (2000, None, None)], ['P54', 'Q7938967', 'Q155730', (2000, None, None), (2002, None, None)], ['P1435', 'Q5139009', 'Q15700834', (1955, 6, 21), None]]
   with open(raw_data_path, "w", encoding="utf-8") as f:
       for row in all_facts:
           formatted_row = "\t".join([str(item) if item is not None else "None" for item in row])
@@ -256,7 +256,7 @@ def main(_):
   name_dict = read_qid_names(qid_path)
   templates = read_templates(templates_path)
   
-  subject_output_path = 'subject_facts.json'
+  subject_output_path = 'Cotempqa/raw_data/subject_facts.json'
   with open(subject_output_path, 'w', encoding='utf-8') as f:
       ind = 0
       while ind < len(all_data):
@@ -264,48 +264,51 @@ def main(_):
           entity = data[1]
           if entity not in name_dict:
               ind += 1
-          else:
-              qid_name = name_dict[entity]
-              data_list = []
-              facts = []
-              while entity == data[1]:
-                  start = eval(data[3]) if data[3] != 'None' else (None, None, None)
-                  end = eval(data[4]) if data[4] != 'None' else (None, None, None)
-                  if (data[3] == 'None' and data[4] == 'None') or data[0] not in templates or data[2] not in name_dict:
-                    ind += 1
-                  elif data[3] == 'None':
-                    fact = templates[data[0]]
-                    fact = fact.replace('<subject>', qid_name).replace('<object>', name_dict[data[2]])
-                    fact += ' in {0}.'.format(start)
-                    facts.append(fact)
-                    ind += 1
-                  elif data[4] == 'None':
-                    fact = templates[data[0]]
-                    fact = fact.replace('<subject>', qid_name).replace('<object>', name_dict[data[2]])
-                    fact += ' in {0}.'.format(end)
-                    facts.append(fact)
-                    ind += 1
-                  else:
-                    fact = templates[data[0]]
-                    fact = fact.replace('<subject>', qid_name).replace('<object>', name_dict[data[2]])
-                    fact += ' from {0} to {1}.'.format(start, end)
-                    facts.append(fact)   
-                    ind += 1
+              continue
+          
+          qid_name = name_dict[entity]
+          data_list = []
+          facts = []
+          
+          while ind < len(all_data) and entity == data[1]:
+              start = eval(data[3]) if data[3] != 'None' else (None, None, None)
+              end = eval(data[4]) if data[4] != 'None' else (None, None, None)
+              
+              if data[3] == 'None' and data[4] == 'None' or data[0] not in templates or data[2] not in name_dict:
+                  ind += 1
+                  if ind < len(all_data):
+                      data = all_data[ind]
+                  continue
+              fact = templates[data[0]].replace('<subject>', qid_name).replace('<object>', name_dict[data[2]])
+              
+              if data[3] == 'None':
+                  fact += f' in {start}.'
+              elif data[4] == 'None':
+                  fact += f' in {end}.'
+              else:
+                  fact += f' from {start} to {end}.'
+              
+              facts.append(fact)
+              data_list.append([data[0], data[2], data[3], data[4]])
+              ind += 1
+              
+              if ind < len(all_data):
                   data = all_data[ind]
-              if len(data_list)>1:
-                item = {
-                    'entity': entity,
-                    'name': qid_name,
-                    'data_list': data_list
-                }
-                json_item = json.dumps(item)
-                f.write(json_item + '\n')
+          
+          if len(data_list) > 1:
+              item = {
+                  'entity': entity,
+                  'name': qid_name,
+                  'data_list': data_list
+              }
+              json_item = json.dumps(item)
+              f.write(json_item + '\n')
 
 
-  object_output_path = 'object_facts.json'
+  object_output_path = 'Cotempqa/raw_data/object_facts.json'
   object_used = set()
   with open(object_output_path, 'w', encoding='utf-8') as f:
-      for i in range(len(all_data)):
+      for i in tqdm(range(len(all_data))):
         data = all_data[i]
         entity = data[2]
         if entity not in name_dict:
@@ -348,4 +351,5 @@ def main(_):
 
 if __name__ == "__main__":
   app.run(main)
+
 
