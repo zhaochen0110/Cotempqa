@@ -41,6 +41,10 @@ random.seed(42)
 Y_TOK = "_X_"
 WIKI_PRE = "/wp/en/"
 
+def read_templates(filepath):
+    with open(filepath, 'r') as file:
+        reader = csv.DictReader(file)
+        return {row["Relation"]: row["Template"] for row in reader}
 
 def parse_date(date_str):
   """Try to parse date from string.
@@ -207,6 +211,21 @@ def read_tsv(filepath):
             all_data.append(row)
     return all_data
 
+months_dict = {1: 'January', 2: 'February', 3: 'March', 4: 'April', 5: 'May', 6: 'June', 7: 'July', 8: 'August', 9: 'September', 10: 'October', 11: 'November', 12: 'December'}
+
+def time_transfer(time):
+    # print(time)
+    if time[1]==0:
+        return str(time[0])
+    elif time[2]==0:
+        return '{0}, {1}'.format(months_dict[time[1]],time[0])
+    else:
+        return '{0} {1}, {2}'.format(months_dict[time[1]],time[2],time[0])
+
+def complete_time(time):
+    year, month, day = time
+    return (year, month if month is not None else 0, day if day is not None else 0)
+
 def main(_):
   # Load relation templates.
   # templates = read_templates()
@@ -217,13 +236,13 @@ def main(_):
   print('qid_names_len',len(qid_names))
   # Load facts with qualifiers.
   all_facts = read_facts(FLAGS.facts_file, qid_mapping, qid_names, FLAGS.min_year)
-  qid_path = '/opt/data/private/co-temporal/test/qid_names.txt'
+  qid_path = 'qid_names.txt'
   with open(qid_path, 'w', encoding='utf-8') as file:
       for key, value in qid_names.items():
           file.write(f"{key}\t{value}\n")
   logging.info(f"Saved qid_names to {qid_path}")
   # Create queries.
-  raw_data_path = "/opt/data/private/co-temporal/test/all_kg.tsv"
+  raw_data_path = "all_kg.tsv"
   # all_facts = [['P54', 'Q18638850', 'Q514714', (2014, None, None), (2014, None, None)], ['P26', 'Q6788484', 'Q229507', (1964, None, None), (1966, None, None)], ['P97', 'Q969823', 'Q3519259', (1808, 3, 19), None], ['P410', 'Q969823', 'Q2487961', (1797, 5, 2), None], ['P2962', 'Q27527529', 'Q105269', (2016, None, None), None], ['P54', 'Q2017737', 'Q499616', (1971, None, None), (1972, None, None)], ['P54', 'Q2017737', 'Q249643', (1974, None, None), (1974, None, None)], ['P54', 'Q2017737', 'Q248765', (1972, None, None), (1973, None, None)], ['P54', 'Q7938967', 'Q181216', (1986, None, None), (1988, None, None)], ['P54', 'Q7938967', 'Q154293', (1992, None, None), (1994, None, None)], ['P54', 'Q7938967', 'Q647893', (1998, None, None), (2000, None, None)], ['P54', 'Q7938967', 'Q155730', (2000, None, None), (2002, None, None)], ['P1435', 'Q5139009', 'Q15700834', (1955, 6, 21), None]]
   with open(raw_data_path, "w", encoding="utf-8") as f:
       for row in all_facts:
@@ -232,10 +251,12 @@ def main(_):
 
   print("Data has been successfully written to", raw_data_path)
 
+  templates_path = 'Cotempqa/templates/templates.csv'
   all_data = read_tsv(raw_data_path)
   name_dict = read_qid_names(qid_path)
-
-  subject_output_path = '/opt/data/private/szc/Cotempqa/raw_data/subject_facts.json'
+  templates = read_templates(templates_path)
+  
+  subject_output_path = 'subject_facts.json'
   with open(subject_output_path, 'w', encoding='utf-8') as f:
       ind = 0
       while ind < len(all_data):
@@ -246,22 +267,41 @@ def main(_):
           else:
               qid_name = name_dict[entity]
               data_list = []
+              facts = []
               while entity == data[1]:
-                  data_list.append([data[0], data[2], data[3], data[4]])
-                  ind += 1
-                  if ind < len(all_data):
-                      data = all_data[ind]
+                  start = eval(data[3]) if data[3] != 'None' else (None, None, None)
+                  end = eval(data[4]) if data[4] != 'None' else (None, None, None)
+                  if (data[3] == 'None' and data[4] == 'None') or data[0] not in templates or data[2] not in name_dict:
+                    ind += 1
+                  elif data[3] == 'None':
+                    fact = templates[data[0]]
+                    fact = fact.replace('<subject>', qid_name).replace('<object>', name_dict[data[2]])
+                    fact += ' in {0}.'.format(start)
+                    facts.append(fact)
+                    ind += 1
+                  elif data[4] == 'None':
+                    fact = templates[data[0]]
+                    fact = fact.replace('<subject>', qid_name).replace('<object>', name_dict[data[2]])
+                    fact += ' in {0}.'.format(end)
+                    facts.append(fact)
+                    ind += 1
                   else:
-                      break
-              item = {
-                  'entity': entity,
-                  'name': qid_name,
-                  'data_list': data_list
-              }
-              json_item = json.dumps(item)
-              f.write(json_item + '\n')
+                    fact = templates[data[0]]
+                    fact = fact.replace('<subject>', qid_name).replace('<object>', name_dict[data[2]])
+                    fact += ' from {0} to {1}.'.format(start, end)
+                    facts.append(fact)   
+                    ind += 1
+              if len(data_list)>1:
+                item = {
+                    'entity': entity,
+                    'name': qid_name,
+                    'data_list': data_list
+                }
+                json_item = json.dumps(item)
+                f.write(json_item + '\n')
 
-  object_output_path = '/opt/data/private/szc/Cotempqa/raw_data/object_facts.json'
+
+  object_output_path = 'object_facts.json'
   object_used = set()
   with open(object_output_path, 'w', encoding='utf-8') as f:
       for i in range(len(all_data)):
@@ -272,11 +312,31 @@ def main(_):
         if entity in object_used:
           continue
         data_list = []
+        facts = []
         object_used.add(entity)
         for j in range(i+1, len(all_data)):
           if entity == all_data[j][2]:
+            start = eval(data[3]) if data[3] != 'None' else (None, None, None)
+            end = eval(data[4]) if data[4] != 'None' else (None, None, None)
+            if (data[3] == 'None' and data[4] == 'None') or data[0] not in templates or data[1] not in name_dict:
+              continue
+            elif data[3] == 'None':
+              fact = templates[data[0]]
+              fact = fact.replace('<subject>', name_dict[data[1]]).replace('<object>', qid_name)
+              fact += ' in {0}.'.format(start)
+              facts.append(fact)
+            elif data[4] == 'None':
+              fact = templates[data[0]]
+              fact = fact.replace('<subject>', name_dict[data[1]]).replace('<object>', qid_name)
+              fact += ' in {0}.'.format(end)
+              facts.append(fact)
+            else:
+              fact = templates[data[0]]
+              fact = fact.replace('<subject>', name_dict[data[1]]).replace('<object>', qid_name)
+              fact += ' from {0} to {1}.'.format(start, end)
+              facts.append(fact)   
             data_list.append([data[0], data[1], data[3], data[4]]) 
-        if data_list!=[]:
+        if len(data_list)>1:
           item = {
               'entity': entity,
               'name': qid_name,
@@ -287,3 +347,4 @@ def main(_):
 
 if __name__ == "__main__":
   app.run(main)
+
