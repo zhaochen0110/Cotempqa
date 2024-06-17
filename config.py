@@ -276,18 +276,6 @@ def evaluate_gpt(file_path):
                 continue
             cnt.add(question)
 
-            entity = data['entity']
-            if 'S1_R1_O2' in id or 'S1_R2_O2' in id:
-                entity_name = name_dict_all[entity].lower()
-            elif 'S2_R1_O1' in id:
-                entity_name = name_dict_v5[entity].lower()
-            elif 'S2_R1_O2' in id or 'S2_R2_O2' in id:
-                entity_name = name_dict_v3[entity[0]].lower()
-                if 'which ' in question:
-                    question_with_condition = question.split('which ')[0]
-                elif 'who ' in question:
-                    question_with_condition =  question.split('who ')[0]
-                      
             if 'S2_R1_O1' in id:
                 is_subject = True
             else:
@@ -368,4 +356,5 @@ def evaluate_gpt(file_path):
         'r': round(r_total * 100 / count, 1),
         'avg': round((em_total + f1_total) * 50 / count, 1)
     }
+
 
