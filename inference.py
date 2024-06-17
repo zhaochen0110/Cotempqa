@@ -35,7 +35,7 @@ def evaluate_cotemporal(model_name, data_path, mode, output_dir, evaluate_result
         with open(output_path, 'r', encoding='utf-8') as f:
             for line in f:
                 output_data.append(json.loads(line))
-        result = evaluate_gpt(output_data, mode)
+        result = evaluate_gpt(output_data)
         
     else:
         llm = LLM(model=model_name, tensor_parallel_size=1)
