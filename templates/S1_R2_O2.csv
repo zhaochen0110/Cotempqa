@@ -1,0 +1,12 @@
+Wikidata ID,Relation,Template
+P39-P102, position held/political party, "While <subject1> was holding the position of <object1>,which political party did <subject1> belong to within the same time?"
+P39-P108, position held/employer, "While <subject1> was holding the position of <object1>,which employer did <subject1> work for during the same time span?"
+P102-P39, political party/position held, "While <subject1> was a member of <object1>,which position did <subject1> hold within the same time interval?"
+P69-P108, educated at/employer, "While <subject1> attended <object1>,which employer did <subject1> work for during the same time period?"
+P108-P69, employer/educated at, "While <subject1> was working for <object1>,which school did <subject1> attend at the same time?"
+P69-P39, educated/position held, "While <subject1> attended <object1>,which position did <subject1> hold within the same time?"
+P108-P39, employer/position held, "While <subject1> was working for <object1>,which position did <subject1> hold within the same time?"
+P102-P108, political party/employer, "While <subject1> was a member of <object1>,which employer did <subject1> work for within the same time interval?"
+P69-P102, educated at/political party, "While <subject1> attended <object1>,which political party did <subject1> belong to during the same time period?"
+P102-P69, political party/educated at, "While <subject1> was a member of <object1>,which school did <subject1> attend within the same time interval?"
+P54-P69, member of sports team/educated at, "While <subject1> was playing for <object1>,which school did <subject1> attend within the same time span?"

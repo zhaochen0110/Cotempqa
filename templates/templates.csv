@@ -1,0 +1,8 @@
+Wikidata ID,Relation,Template,
+P39,position held,<subject> holds the position of <object>
+P54,member of sports team,<subject> plays for <object>
+P69,educated at,<subject> attended <object>
+P102,political party,<subject> is a member of <object>
+P108,employer,<subject> works for <object>
+P127,owned by,<subject> is owned by <object>
+P286,head coach,<subject> is the head coach of <object>
