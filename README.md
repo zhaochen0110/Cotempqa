@@ -4,12 +4,18 @@
   <img src="picture.png" width=500 alt="image1">
 </p>
 
+<div align="center">
+    📃<a href="https://arxiv.org/pdf/2406.09072" target="_blank">Paper</a> | 💾<a href="https://huggingface.co/datasets/Warrieryes/CotempQA/" target="_blank">Dataset</a> 
+</div>
+
+😎: This is the official implementation repository of our study on co-temporal reasoning capabilities in Large Language Models (LLMs), accepted at ACL 2024 Main Conference.
+
+<hr>
 
 We propose the CotempQA, the first comprehensive co-temporal Question Answering (QA) benchmark containing four co-temporal scenarios (Equal, Overlap, During, Mix) with **4,748** samples for evaluating the co-temporal comprehension and reasoning abilities of LLMs.
 
 
-<hr>
-😎: This is the official implementation repository of our study on co-temporal reasoning capabilities in Large Language Models (LLMs), accepted at ACL 2024 Main Conference.
+
 
 ## 📊 Leaderboard
 
