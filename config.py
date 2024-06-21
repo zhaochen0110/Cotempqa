@@ -213,7 +213,7 @@ def evaluate_model(all_data, mode):
         golds = data['gold']
         golds = [ans.lower() for ans in golds]
 
-        is_subject = 'S1_R1_O2' not in data['triple_element']
+        is_subject = 'S2_R1_O1' not in data['triple_element']
 
         prediction = data['prediction'].lower()
         if 'cot' in mode:
